@@ -4,8 +4,8 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import mordvinov_dev.subscription_service.dto.request.CreateSubscriptionRequest;
 import mordvinov_dev.subscription_service.dto.request.pageable.PageRequest;
-import mordvinov_dev.subscription_service.dto.response.SubscriptionPageResponse;
 import mordvinov_dev.subscription_service.dto.response.SubscriptionResponse;
+import mordvinov_dev.subscription_service.dto.response.pageable.PageResponse;
 import mordvinov_dev.subscription_service.entity.Subscription;
 import mordvinov_dev.subscription_service.entity.enums.PlanType;
 import mordvinov_dev.subscription_service.entity.enums.StatusType;
@@ -48,44 +48,42 @@ public class SubscriptionServiceImpl implements SubscriptionService {
     }
 
     @Override
-    public SubscriptionPageResponse getUserSubscriptions(UUID userId, PageRequest pageRequest) {
+    public PageResponse<SubscriptionResponse> getUserSubscriptions(UUID userId, PageRequest pageRequest) {
         log.debug("Fetching subscriptions for user: {}, page: {}", userId, pageRequest.getPageNumber());
 
         Page<Subscription> subscriptions = subscriptionRepository.findAllByUserId(userId, pageRequest.toPageable());
 
-        return SubscriptionPageResponse.builder()
+        return PageResponse.<SubscriptionResponse>builder()
                 .content(entityMapper.mapList(subscriptions.getContent(), SubscriptionResponse.class))
-                .pageNumber(subscriptions.getNumber())
-                .pageSize(subscriptions.getSize())
-                .totalElements(subscriptions.getTotalElements())
+                .currentPage(subscriptions.getNumber())
                 .totalPages(subscriptions.getTotalPages())
-                .last(subscriptions.isLast())
+                .totalElements(subscriptions.getTotalElements())
+                .pageSize(subscriptions.getSize())
                 .first(subscriptions.isFirst())
-                .empty(subscriptions.isEmpty())
+                .last(subscriptions.isLast())
                 .build();
     }
 
     @Override
-    public SubscriptionPageResponse getUserSubscriptionsByStatus(UUID userId, StatusType status, PageRequest pageRequest) {
+    public PageResponse<SubscriptionResponse> getUserSubscriptionsByStatus(UUID userId, StatusType status, PageRequest pageRequest) {
         log.debug("Fetching {} subscriptions for user: {}, page: {}", status, userId, pageRequest.getPageNumber());
 
         Page<Subscription> subscriptions = subscriptionRepository.findAllByUserIdAndStatus(userId, status, pageRequest.toPageable());
 
-        return SubscriptionPageResponse.builder()
+        return PageResponse.<SubscriptionResponse>builder()
                 .content(entityMapper.mapList(subscriptions.getContent(), SubscriptionResponse.class))
-                .pageNumber(subscriptions.getNumber())
-                .pageSize(subscriptions.getSize())
-                .totalElements(subscriptions.getTotalElements())
+                .currentPage(subscriptions.getNumber())
                 .totalPages(subscriptions.getTotalPages())
-                .last(subscriptions.isLast())
+                .totalElements(subscriptions.getTotalElements())
+                .pageSize(subscriptions.getSize())
                 .first(subscriptions.isFirst())
-                .empty(subscriptions.isEmpty())
+                .last(subscriptions.isLast())
                 .build();
     }
 
     @Override
     @Transactional
-    public SubscriptionResponse cancelSubscription(UUID subscriptionId, UUID userId, String cancellationReason) {
+    public SubscriptionResponse cancelSubscription(UUID subscriptionId, UUID userId) {
         log.info("Cancelling subscription: {} for user: {}", subscriptionId, userId);
 
         Subscription subscription = ownershipValidator.validateAndGetSubscription(subscriptionId, userId);
