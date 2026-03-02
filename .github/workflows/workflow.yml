@@ -76,11 +76,17 @@ jobs:
           SPRING_REDIS_HOST: localhost
           SPRING_REDIS_PORT: 6379
 
+      - name: Set safe service name
+        id: safe-name
+        run: |
+          SAFE_NAME=$(echo "${{ matrix.service }}" | tr '/' '-')
+          echo "safe-name=$SAFE_NAME" >> $GITHUB_OUTPUT
+
       - name: Upload test results
         uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: test-results-${{ replace(matrix.service, '/', '-') }}
+          name: test-results-${{ steps.safe-name.outputs.safe-name }}
           path: |
             **/target/surefire-reports/
             **/target/failsafe-reports/
@@ -90,7 +96,7 @@ jobs:
         uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: coverage-reports-${{ replace(matrix.service, '/', '-') }}
+          name: coverage-reports-${{ steps.safe-name.outputs.safe-name }}
           path: |
             **/target/site/jacoco/
             **/target/jacoco.xml
@@ -229,6 +235,12 @@ jobs:
       - name: Build service artifact
         run: |
           mvn -B -pl ${{ matrix.service }} -am package -DskipTests -Djacoco.skip=true
+
+      - name: Set safe service name
+        id: safe-name
+        run: |
+          SAFE_NAME=$(echo "${{ matrix.service }}" | tr '/' '-')
+          echo "safe-name=$SAFE_NAME" >> $GITHUB_OUTPUT
 
       - name: Build and push Docker image
         uses: docker/build-push-action@v5
