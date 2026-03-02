@@ -1,0 +1,34 @@
+global:
+  scrape_interval: 15s
+  scrape_timeout: 10s
+  evaluation_interval: 15s
+
+scrape_configs:
+  - job_name: 'prometheus'
+    static_configs:
+      - targets: ['prometheus:9090']
+
+  - job_name: 'spring-boot-apps'
+    metrics_path: /actuator/prometheus
+    static_configs:
+      - targets:
+          - 'subscription-service:8080'
+          - 'api-gateway:8080'
+          - 'eureka-server:8761'
+          - 'worker-service:8080'
+          - 'billing-service:8080'
+
+  - job_name: 'infrastructure'
+    metrics_path: /metrics
+    static_configs:
+      - targets:
+          - 'grafana:3000'
+          - 'loki:3100'
+          - 'tempo:3200'
+
+  - job_name: 'postgres-exporters'
+    static_configs:
+      - targets:
+          - 'subscription-postgres-exporter:9187'
+          - 'billing-postgres-exporter:9187'
+          - 'worker-postgres-exporter:9187'
