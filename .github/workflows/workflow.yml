@@ -17,7 +17,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        service: [eureka-server, api-gateway, subscription-service, worker-service, billing-service]
+        service: [services/eureka-server, services/api-gateway, services/subscription-service, services/worker-service, services/billing-service]
         java-version: [21]
 
     services:
@@ -76,13 +76,6 @@ jobs:
           SPRING_REDIS_HOST: localhost
           SPRING_REDIS_PORT: 6379
 
-      - name: Check if coverage reports exist
-        run: |
-          echo "Checking for JaCoCo reports in ${{ matrix.service }}..."
-          find . -name "jacoco.xml" -o -name "jacoco.csv" -o -name "index.html" | head -10 || echo "No JaCoCo reports found"
-          ls -la ${{ matrix.service }}/target/site/ 2>/dev/null || echo "No site directory in ${{ matrix.service }}"
-          ls -la ${{ matrix.service }}/target/ 2>/dev/null || echo "No target directory in ${{ matrix.service }}"
-
       - name: Upload test results
         uses: actions/upload-artifact@v4
         if: always()
@@ -91,17 +84,6 @@ jobs:
           path: |
             **/target/surefire-reports/
             **/target/failsafe-reports/
-          retention-days: 30
-
-      - name: Upload coverage reports
-        uses: actions/upload-artifact@v4
-        if: always()
-        with:
-          name: coverage-reports-${{ matrix.service }}
-          path: |
-            **/target/site/jacoco/
-            **/target/jacoco.xml
-            **/target/jacoco.exec
           retention-days: 30
 
   code-analysis:
@@ -122,13 +104,6 @@ jobs:
           distribution: 'temurin'
           cache: 'maven'
 
-      - name: Cache Maven packages
-        uses: actions/cache@v4
-        with:
-          path: ~/.m2
-          key: ${{ runner.os }}-m2-${{ hashFiles('**/pom.xml') }}
-          restore-keys: ${{ runner.os }}-m2-
-
       - name: Run Super-Linter
         continue-on-error: true
         uses: github/super-linter@v5
@@ -141,43 +116,10 @@ jobs:
           VALIDATE_DOCKERFILE_HADOLINT: true
           VALIDATE_MARKDOWN: true
 
-      - name: Create temporary .codacy.yml
-        run: |
-          cat > .codacy.yml << 'EOF'
-          ---
-          exclude_paths:        
-            - "**/*.sql"
-            - "infrastructure/**"
-          EOF
-
-      - name: Codacy analysis
-        continue-on-error: true
-        uses: codacy/codacy-analysis-cli-action@master
-        with:
-          project-token: ${{ secrets.CODACY_PROJECT_TOKEN }}
-          verbose: true
-
-      - name: Remove temporary .codacy.yml
-        if: always()
-        run: rm -f .codacy.yml
-
-      - name: Cache OWASP dependency data
-        if: github.event_name == 'pull_request'
-        uses: actions/cache@v4
-        with:
-          path: ~/.m2/repository/org/owasp/dependency-check-data
-          key: ${{ runner.os }}-owasp-data-${{ github.run_id }}
-          restore-keys: |
-            ${{ runner.os }}-owasp-data-
-
-      - name: Fix permissions
-        if: github.event_name == 'pull_request'
-        run: sudo chown -R $USER:$USER .
-
       - name: Run OWASP dependency check
         if: github.event_name == 'pull_request'
         run: |
-          mvn -B clean compile org.owasp:dependency-check-maven:check -DskipTests 
+          mvn -B clean compile org.owasp:dependency-check-maven:check -DskipTests
 
       - name: Check for vulnerable dependencies
         uses: aquasecurity/trivy-action@master
@@ -201,7 +143,7 @@ jobs:
 
     strategy:
       matrix:
-        service: [eureka-server, api-gateway, subscription-service, worker-service, billing-service]
+        service: [services/eureka-server, services/api-gateway, services/subscription-service, services/worker-service, services/billing-service]
 
     steps:
       - name: Checkout code
@@ -280,7 +222,7 @@ jobs:
 
       - name: Run integration tests
         run: |
-          mvn -B -pl api-gateway,eureka-server,subscription-service,worker-service,billing-service -am verify -DskipUnitTests=true -Djacoco.skip=true
+          mvn -B -pl services/api-gateway,services/eureka-server,services/subscription-service,services/worker-service,services/billing-service -am verify -DskipUnitTests=true -Djacoco.skip=true
         env:
           SPRING_PROFILES_ACTIVE: test
           SPRING_DATASOURCE_URL: jdbc:h2:mem:testdb;DB_CLOSE_DELAY=-1;MODE=PostgreSQL;DATABASE_TO_UPPER=false

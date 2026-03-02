@@ -1,6 +1,6 @@
 {
   "id": "f92554da-2475-4805-9b13-325a35b317c7",
-  "realm": "social-network",
+  "realm": "sub-engine",
   "displayName": "",
   "displayNameHtml": "",
   "notBefore": 0,
@@ -107,7 +107,7 @@
       },
       {
         "id": "36cd8959-e259-4e66-b5af-6ea76d11941b",
-        "name": "default-roles-social-network",
+        "name": "default-roles-sub-engine",
         "description": "${role_default-roles}",
         "composite": true,
         "composites": {
@@ -128,7 +128,7 @@
       }
     ],
     "client": {
-      "social-network-web": [],
+      "sub-engine-web": [],
       "realm-management": [
         {
           "id": "645d055e-6033-48c4-9356-2578e5e7ef97",
@@ -486,7 +486,7 @@
   ],
   "defaultRole": {
     "id": "36cd8959-e259-4e66-b5af-6ea76d11941b",
-    "name": "default-roles-social-network",
+    "name": "default-roles-sub-engine",
     "description": "${role_default-roles}",
     "composite": true,
     "clientRole": false,
@@ -561,13 +561,13 @@
       "clientId": "account",
       "name": "${client_account}",
       "rootUrl": "${authBaseUrl}",
-      "baseUrl": "/realms/social-network/account/",
+      "baseUrl": "/realms/sub-engine/account/",
       "surrogateAuthRequired": false,
       "enabled": true,
       "alwaysDisplayInConsole": false,
       "clientAuthenticatorType": "client-secret",
       "redirectUris": [
-        "/realms/social-network/account/*"
+        "/realms/sub-engine/account/*"
       ],
       "webOrigins": [],
       "notBefore": 0,
@@ -608,13 +608,13 @@
       "clientId": "account-console",
       "name": "${client_account-console}",
       "rootUrl": "${authBaseUrl}",
-      "baseUrl": "/realms/social-network/account/",
+      "baseUrl": "/realms/sub-engine/account/",
       "surrogateAuthRequired": false,
       "enabled": true,
       "alwaysDisplayInConsole": false,
       "clientAuthenticatorType": "client-secret",
       "redirectUris": [
-        "/realms/social-network/account/*"
+        "/realms/sub-engine/account/*"
       ],
       "webOrigins": [],
       "notBefore": 0,
@@ -854,13 +854,13 @@
       "clientId": "security-admin-console",
       "name": "${client_security-admin-console}",
       "rootUrl": "${authAdminUrl}",
-      "baseUrl": "/admin/social-network/console/",
+      "baseUrl": "/admin/sub-engine/console/",
       "surrogateAuthRequired": false,
       "enabled": true,
       "alwaysDisplayInConsole": false,
       "clientAuthenticatorType": "client-secret",
       "redirectUris": [
-        "/admin/social-network/console/*"
+        "/admin/sub-engine/console/*"
       ],
       "webOrigins": [
         "+"
@@ -920,9 +920,9 @@
     },
     {
       "id": "9f163e31-42ed-4b91-ab4d-8cef4fcd5d30",
-      "clientId": "social-network-web",
-      "name": "Social Network Web",
-      "description": "Main web application for social network",
+      "clientId": "sub-engine-web",
+      "name": "Sub engine Web",
+      "description": "Main web application for sub engine",
       "rootUrl": "http://localhost:3001",
       "adminUrl": "http://localhost:3001",
       "baseUrl": "",
@@ -1722,8 +1722,8 @@
     "port": "1025",
     "host": "maildev",
     "replyTo": "",
-    "from": "noreply@socialnetwork.com",
-    "fromDisplayName": "Social Network",
+    "from": "noreply@subengine.com",
+    "fromDisplayName": "Sub Engine",
     "envelopeFrom": "",
     "ssl": "false"
   },
