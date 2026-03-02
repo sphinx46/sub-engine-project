@@ -80,10 +80,21 @@ jobs:
         uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: test-results-${{ matrix.service }}
+          name: test-results-${{ replace(matrix.service, '/', '-') }}
           path: |
             **/target/surefire-reports/
             **/target/failsafe-reports/
+          retention-days: 30
+
+      - name: Upload coverage reports
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: coverage-reports-${{ replace(matrix.service, '/', '-') }}
+          path: |
+            **/target/site/jacoco/
+            **/target/jacoco.xml
+            **/target/jacoco.exec
           retention-days: 30
 
   code-analysis:
@@ -104,6 +115,13 @@ jobs:
           distribution: 'temurin'
           cache: 'maven'
 
+      - name: Cache Maven packages
+        uses: actions/cache@v4
+        with:
+          path: ~/.m2
+          key: ${{ runner.os }}-m2-${{ hashFiles('**/pom.xml') }}
+          restore-keys: ${{ runner.os }}-m2-
+
       - name: Run Super-Linter
         continue-on-error: true
         uses: github/super-linter@v5
@@ -116,10 +134,43 @@ jobs:
           VALIDATE_DOCKERFILE_HADOLINT: true
           VALIDATE_MARKDOWN: true
 
+      - name: Create temporary .codacy.yml
+        run: |
+          cat > .codacy.yml << 'EOF'
+          ---
+          exclude_paths:        
+            - "**/*.sql"
+            - "infrastructure/**"
+          EOF
+
+      - name: Codacy analysis
+        continue-on-error: true
+        uses: codacy/codacy-analysis-cli-action@master
+        with:
+          project-token: ${{ secrets.CODACY_PROJECT_TOKEN }}
+          verbose: true
+
+      - name: Remove temporary .codacy.yml
+        if: always()
+        run: rm -f .codacy.yml
+
+      - name: Cache OWASP dependency data
+        if: github.event_name == 'pull_request'
+        uses: actions/cache@v4
+        with:
+          path: ~/.m2/repository/org/owasp/dependency-check-data
+          key: ${{ runner.os }}-owasp-data-${{ github.run_id }}
+          restore-keys: |
+            ${{ runner.os }}-owasp-data-
+
+      - name: Fix permissions
+        if: github.event_name == 'pull_request'
+        run: sudo chown -R $USER:$USER .
+
       - name: Run OWASP dependency check
         if: github.event_name == 'pull_request'
         run: |
-          mvn -B clean compile org.owasp:dependency-check-maven:check -DskipTests
+          mvn -B clean compile org.owasp:dependency-check-maven:check -DskipTests 
 
       - name: Check for vulnerable dependencies
         uses: aquasecurity/trivy-action@master
@@ -219,6 +270,13 @@ jobs:
         with:
           java-version: 21
           distribution: 'temurin'
+
+      - name: Cache Maven packages
+        uses: actions/cache@v4
+        with:
+          path: ~/.m2
+          key: ${{ runner.os }}-m2-${{ hashFiles('**/pom.xml') }}
+          restore-keys: ${{ runner.os }}-m2-
 
       - name: Run integration tests
         run: |
