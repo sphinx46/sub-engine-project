@@ -41,7 +41,7 @@ eureka:
     hostname: subscription-service
 
 server:
-  port: ${SUBSCRIPTION_SERVICE_PORT:8080}
+  port: ${SUBSCRIPTION_SERVICE_PORT:8081}
 
 logging:
   level:

@@ -194,7 +194,7 @@ services:
       context: ../../services/subscription-service
     container_name: subscription-service
     ports:
-      - "${SUBSCRIPTION_SERVICE_PORT}:8080"
+      - "${SUBSCRIPTION_SERVICE_PORT}:${SUBSCRIPTION_SERVICE_PORT}"
     env_file:
       - ../../.env.dev
     environment:
