@@ -14,13 +14,32 @@ spring:
     hibernate:
       ddl-auto: update
     show-sql: true
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+        format_sql: true
+        jdbc:
+          batch_size: 20
+        order_inserts: true
+        order_updates: true
   kafka:
     bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:kafka:9092}
     producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
       retries: 3
+      properties:
+        spring.json.type.mapping: subscription:mordvinov_dev.subscription_service.event.SubscriptionEvent
     consumer:
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
       group-id: subscription-service-group
       auto-offset-reset: earliest
+      properties:
+        spring.json.trusted.packages: "*"
+        spring.json.type.mapping: subscription:mordvinov_dev.subscription_service.event.SubscriptionEvent
+    topic:
+      subscription-events: subscription.events
   data:
     redis:
       host: ${REDIS_HOST:redis}
@@ -32,6 +51,8 @@ spring:
           max-active: 8
           max-idle: 8
           min-idle: 0
+      repositories:
+        enabled: false
   security:
     oauth2:
       resourceserver:
@@ -43,39 +64,81 @@ eureka:
   client:
     service-url:
       defaultZone: http://eureka-server:8761/eureka/
+    enabled: true
+    fetch-registry: true
+    register-with-eureka: true
+    registry-fetch-interval-seconds: 5
+    instance-info-replication-interval-seconds: 5
+    initial-instance-info-replication-interval-seconds: 5
   instance:
     hostname: subscription-service
+    prefer-ip-address: true
+    instance-id: ${spring.application.name}:${random.value}
+    lease-renewal-interval-in-seconds: 5
+    lease-expiration-duration-in-seconds: 15
+    status-page-url-path: /actuator/info
+    health-check-url-path: /actuator/health
 
 server:
   port: ${SUBSCRIPTION_SERVICE_PORT:8081}
-
-logging:
-  level:
-    com.mordvinov.subscriptionservice: DEBUG
-    org.hibernate.SQL: DEBUG
-    org.hibernate.type.descriptor.sql: TRACE
-    org.springframework.security: DEBUG
-    org.springframework.security.oauth2: DEBUG
-    org.springframework.security.oauth2.jwt: DEBUG
-    org.springframework.security.web: DEBUG
-    org.springframework.kafka: DEBUG
-    com.netflix.discovery: DEBUG
+  tomcat:
+    max-connections: 200
+    max-threads: 50
+    min-spare-threads: 10
+    connection-timeout: 5000
+  error:
+    include-message: always
+    include-binding-errors: always
 
 management:
-  tracing:
-    enabled: true
-  zipkin:
-    tracing:
-      endpoint: http://tempo:9411/api/v2/spans
   endpoints:
     web:
       exposure:
         include: health,info,metrics,prometheus
+  endpoint:
+    health:
+      show-details: always
+  metrics:
+    export:
+      prometheus:
+        enabled: true
+  tracing:
+    enabled: false
+    sampling:
+      probability: 1.0
+  zipkin:
+    tracing:
+      endpoint: http://tempo:9411/api/v2/spans
 
-springdoc:
-  swagger-ui:
-    path: /swagger-ui.html
-    enabled: true
-  api-docs:
-    path: /api-docs
-    enabled: true
+logging:
+  level:
+    org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerMapping: TRACE
+    org.hibernate.SQL: DEBUG
+    org.hibernate.type.descriptor.sql: TRACE
+    org.springframework.security.oauth2: DEBUG
+    org.springframework.security.oauth2.jwt: DEBUG
+    com.netflix.discovery: DEBUG
+    org.springframework.cloud.netflix.eureka: DEBUG
+  pattern:
+    level: '%5p [${spring.application.name:},%X{traceId:-},%X{spanId:-}]'
+
+resilience4j:
+  circuitbreaker:
+    instances:
+      subscriptionService:
+        register-health-indicator: true
+        sliding-window-size: 10
+        minimum-number-of-calls: 5
+        permitted-number-of-calls-in-half-open-state: 3
+        automatic-transition-from-open-to-half-open-enabled: true
+        wait-duration-in-open-state: 5s
+        failure-rate-threshold: 50
+        event-consumer-buffer-size: 10
+  retry:
+    instances:
+      subscriptionService:
+        max-attempts: 3
+        wait-duration: 1s
+        retry-exceptions:
+          - org.springframework.dao.DataAccessException
+          - java.net.ConnectException

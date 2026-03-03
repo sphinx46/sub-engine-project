@@ -3,91 +3,20 @@ spring:
     name: subscription-service
   profiles:
     active: dev
-  jpa:
-    hibernate:
-      ddl-auto: validate
-    properties:
-      hibernate:
-        dialect: org.hibernate.dialect.PostgreSQLDialect
-        format_sql: true
-        jdbc:
-          batch_size: 20
-        order_inserts: true
-        order_updates: true
-    show-sql: false
-    open-in-view: false
-  kafka:
-    producer:
-      key-serializer: org.apache.kafka.common.serialization.StringSerializer
-      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
-      properties:
-        spring.json.type.mapping: subscription:com.mordvinov.subscriptionservice.event.SubscriptionEvent
-    consumer:
-      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
-      value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
-      properties:
-        spring.json.trusted.packages: "*"
-        spring.json.type.mapping: subscription:com.mordvinov.subscriptionservice.event.SubscriptionEvent
-    topic:
-      subscription-events: subscription.events
-  data:
-    redis:
-      repositories:
-        enabled: false
-  security:
-    oauth2:
-      resourceserver:
-        jwt:
-          issuer-uri: ${spring.security.oauth2.resourceserver.jwt.issuer-uri:http://keycloak:8080/realms/sub-engine}
 
 server:
   port: 8080
-  error:
-    include-message: always
-    include-binding-errors: always
 
 eureka:
   client:
     service-url:
       defaultZone: http://localhost:8761/eureka/
-    enabled: true
-    fetch-registry: true
-    register-with-eureka: true
-  instance:
-    hostname: localhost
-    prefer-ip-address: true
-    instance-id: ${spring.application.name}:${random.value}
-    lease-renewal-interval-in-seconds: 30
-    lease-expiration-duration-in-seconds: 90
-
-management:
-  endpoints:
-    web:
-      exposure:
-        include: health,info,metrics,prometheus
-  metrics:
-    export:
-      prometheus:
-        enabled: true
-  tracing:
-    sampling:
-      probability: 1.0
-  zipkin:
-    tracing:
-      endpoint: http://tempo:9411/api/v2/spans
 
 logging:
   level:
-    com.mordvinov.subscriptionservice: DEBUG
+    mordvinov_dev.subscription_service: DEBUG
     org.springframework.web: INFO
     org.springframework.security: DEBUG
-    org.springframework.security.oauth2: DEBUG
-    org.springframework.cloud: INFO
-    org.hibernate: WARN
-    org.hibernate.SQL: DEBUG
-    org.hibernate.type.descriptor.sql: TRACE
-  pattern:
-    level: '%5p [${spring.application.name:},%X{traceId:-},%X{spanId:-}]'
 
 springdoc:
   api-docs:
@@ -96,26 +25,4 @@ springdoc:
   swagger-ui:
     path: /swagger-ui.html
     enabled: true
-  packages-to-scan: com.mordvinov.subscriptionservice.controller
-  show-actuator: true
-
-resilience4j:
-  circuitbreaker:
-    instances:
-      subscriptionService:
-        register-health-indicator: true
-        sliding-window-size: 10
-        minimum-number-of-calls: 5
-        permitted-number-of-calls-in-half-open-state: 3
-        automatic-transition-from-open-to-half-open-enabled: true
-        wait-duration-in-open-state: 5s
-        failure-rate-threshold: 50
-        event-consumer-buffer-size: 10
-  retry:
-    instances:
-      subscriptionService:
-        max-attempts: 3
-        wait-duration: 1s
-        retry-exceptions:
-          - org.springframework.dao.DataAccessException
-          - java.net.ConnectException
+  packages-to-scan: mordvinov_dev.subscription_service

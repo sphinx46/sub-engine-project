@@ -1,4 +1,4 @@
-package mordvinov_dev.subscription_service.service;
+package mordvinov_dev.subscription_service.service.impl;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -13,6 +13,7 @@ import mordvinov_dev.subscription_service.exception.InvalidSubscriptionStatusExc
 import mordvinov_dev.subscription_service.exception.SubscriptionAlreadyCancelledException;
 import mordvinov_dev.subscription_service.mapping.EntityMapper;
 import mordvinov_dev.subscription_service.repository.SubscriptionRepository;
+import mordvinov_dev.subscription_service.service.SubscriptionService;
 import mordvinov_dev.subscription_service.validation.SubscriptionOwnershipValidator;
 import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Service;
