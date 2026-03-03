@@ -1,0 +1,84 @@
+spring:
+  datasource:
+    url: jdbc:postgresql://localhost:5432/billing_test
+    username: test_user
+    password: test_password
+    driver-class-name: org.postgresql.Driver
+    hikari:
+      maximum-pool-size: 5
+      minimum-idle: 2
+      connection-timeout: 30000
+
+  jpa:
+    hibernate:
+      ddl-auto: create-drop
+    show-sql: true
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+        format_sql: true
+        jdbc:
+          batch_size: 5
+        order_inserts: true
+        order_updates: true
+
+  flyway:
+    enabled: false
+
+  kafka:
+    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
+      retries: 1
+    consumer:
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
+      group-id: billing-service-test
+      auto-offset-reset: earliest
+      properties:
+        spring.json.trusted.packages: "*"
+
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: http://localhost:8080/realms/sub-engine
+          jwk-set-uri: http://localhost:8080/realms/sub-engine/protocol/openid-connect/certs
+
+eureka:
+  client:
+    enabled: false
+    register-with-eureka: false
+    fetch-registry: false
+
+server:
+  port: 0
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+  endpoint:
+    health:
+      show-details: always
+
+logging:
+  level:
+    mordvinov_dev.billing_service: DEBUG
+    org.springframework.web: DEBUG
+    org.springframework.security: DEBUG
+    org.springframework.security.oauth2: DEBUG
+    org.springframework.security.oauth2.jwt: DEBUG
+    org.springframework.transaction: DEBUG
+    org.hibernate.SQL: DEBUG
+    org.hibernate.type.descriptor.sql: TRACE
+    com.netflix.discovery: OFF
+    org.springframework.cloud.netflix.eureka: OFF
+
+youkassa:
+  shop-id: test_shop_id
+  secret-key: test_secret_key
+  return-url: http://localhost:8084/api/billing/return
+  webhook-url: http://localhost:8084/api/billing/webhook
