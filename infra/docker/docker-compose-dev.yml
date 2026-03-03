@@ -256,7 +256,7 @@ services:
       - "${SUBSCRIPTION_DB_PORT}:5432"
     volumes:
       - subscription_postgres_data:/var/lib/postgresql/data
-      - ./databases/subscription:/docker-entrypoint-initdb.d:ro
+      - ../../infra/databases/subscription:/docker-entrypoint-initdb.d:ro
     healthcheck:
       test: [ "CMD-SHELL", "pg_isready -U ${SUBSCRIPTION_DB_USERNAME} -d ${SUBSCRIPTION_DB_NAME}" ]
       interval: 10s
