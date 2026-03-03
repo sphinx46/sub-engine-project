@@ -41,6 +41,7 @@ public class SubscriptionServiceImpl implements SubscriptionService {
         subscription.setUserId(userId);
         subscription.setPlanType(request.getPlanType() != null ? request.getPlanType() : PlanType.FREE);
         subscription.setStatus(StatusType.ACTIVE);
+        subscription.setNextBillingDate(LocalDateTime.now().plusMonths(1));
 
         Subscription savedSubscription = subscriptionRepository.save(subscription);
         log.info("Subscription created with id: {}", savedSubscription.getId());

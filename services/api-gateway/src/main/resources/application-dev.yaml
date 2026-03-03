@@ -83,6 +83,15 @@ logging:
   level:
     mordvinov_dev.api_gateway: DEBUG
     org.springframework.security: DEBUG
+    org.springframework.security.web.server: DEBUG
+    org.springframework.security.oauth2: DEBUG
+    org.springframework.security.oauth2.jwt: DEBUG
     org.springframework.cloud.gateway: DEBUG
-    reactor.netty: INFO
-    io.netty: INFO
+    org.springframework.web.server: DEBUG
+    org.springframework.web.reactive: DEBUG
+    reactor.netty: DEBUG
+    io.netty: DEBUG
+    org.springframework.security.web.server.authentication: DEBUG
+    org.springframework.security.web.server.authorization: DEBUG
+    org.springframework.security.web.server.context: DEBUG
+    org.springframework.security.web.server.util.matcher: DEBUG

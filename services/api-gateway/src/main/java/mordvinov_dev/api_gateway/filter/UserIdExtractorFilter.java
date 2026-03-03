@@ -1,0 +1,69 @@
+package mordvinov_dev.api_gateway.filter;
+
+import jakarta.annotation.PostConstruct;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.cloud.gateway.filter.GatewayFilterChain;
+import org.springframework.cloud.gateway.filter.GlobalFilter;
+import org.springframework.core.Ordered;
+import org.springframework.core.annotation.Order;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.server.reactive.ServerHttpRequest;
+import org.springframework.security.core.context.ReactiveSecurityContextHolder;
+import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken;
+import org.springframework.stereotype.Component;
+import org.springframework.web.server.ServerWebExchange;
+import reactor.core.publisher.Mono;
+
+@Slf4j
+@Component
+@Order(Ordered.HIGHEST_PRECEDENCE + 1)
+@RequiredArgsConstructor
+public class UserIdExtractorFilter implements GlobalFilter, Ordered {
+
+    private static final String USER_ID_HEADER = "X-User-Id";
+    private static final String USER_ID_CLAIM = "sub";
+
+    @PostConstruct
+    public void init() {
+        log.info("UserIdExtractorFilter initialized with order: {}", getOrder());
+    }
+
+    @Override
+    public Mono<Void> filter(ServerWebExchange exchange, GatewayFilterChain chain) {
+        ServerHttpRequest request = exchange.getRequest();
+
+        log.debug("Processing request: {} {}", request.getMethod(), request.getURI().getPath());
+
+        return ReactiveSecurityContextHolder.getContext()
+                .map(securityContext -> securityContext.getAuthentication())
+                .filter(JwtAuthenticationToken.class::isInstance)
+                .map(JwtAuthenticationToken.class::cast)
+                .map(JwtAuthenticationToken::getToken)
+                .flatMap(jwt -> {
+                    String userId = jwt.getClaimAsString(USER_ID_CLAIM);
+
+                    if (userId != null) {
+                        log.debug("Extracted userId: {} for path: {}", userId, request.getURI().getPath());
+
+                        ServerHttpRequest mutatedRequest = request.mutate()
+                                .header(USER_ID_HEADER, userId)
+                                .build();
+
+                        return chain.filter(exchange.mutate().request(mutatedRequest).build());
+                    }
+
+                    log.warn("userId claim not found in JWT for path: {}", request.getURI().getPath());
+                    return chain.filter(exchange);
+                })
+                .switchIfEmpty(Mono.defer(() -> {
+                    log.debug("No authenticated user found for path: {}", request.getURI().getPath());
+                    return chain.filter(exchange);
+                }));
+    }
+
+    @Override
+    public int getOrder() {
+        return Ordered.HIGHEST_PRECEDENCE + 1;
+    }
+}
