@@ -66,7 +66,6 @@
             <artifactId>zipkin-reporter-brave</artifactId>
         </dependency>
 
-        <!-- ModelMapper (не в корневом) -->
         <dependency>
             <groupId>org.modelmapper</groupId>
             <artifactId>modelmapper</artifactId>

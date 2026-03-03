@@ -1,9 +1,9 @@
 package mordvinov_dev.api_gateway.config;
 
-
 import org.springframework.cloud.gateway.filter.ratelimit.KeyResolver;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Primary;
 import reactor.core.publisher.Mono;
 
 import java.util.Optional;
@@ -12,6 +12,7 @@ import java.util.Optional;
 public class GatewayConfig {
 
     @Bean
+    @Primary
     public KeyResolver userKeyResolver() {
         return exchange -> exchange.getPrincipal()
                 .map(principal -> principal.getName())

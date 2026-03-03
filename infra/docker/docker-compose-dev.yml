@@ -33,19 +33,24 @@ services:
       - KEYCLOAK_CLIENT_SECRET=${KEYCLOAK_CLIENT_SECRET}
       - SIGNATURE_KEY_SECRET=${SIGNATURE_KEY_SECRET}
       - SPRING_PROFILES_ACTIVE=${SPRING_PROFILES_ACTIVE}
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
     depends_on:
       eureka-server:
         condition: service_started
       keycloak:
         condition: service_started
+      redis:
+        condition: service_healthy
     healthcheck:
-      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8080/actuator/health"]
+      test: [ "CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8080/actuator/health" ]
       interval: 30s
       timeout: 10s
       retries: 3
       start_period: 40s
     networks:
       - sub-engine-network
+
 
   loki:
     image: grafana/loki:2.9.2
@@ -223,6 +228,30 @@ services:
       timeout: 10s
       retries: 3
       start_period: 40s
+    networks:
+      - sub-engine-network
+
+  redis:
+    image: redis:7-alpine
+    container_name: redis
+    ports:
+      - "${REDIS_PORT:-6379}:6379"
+    volumes:
+      - redis_data:/data
+    command: redis-server --appendonly yes
+    healthcheck:
+      test: [ "CMD", "redis-cli", "ping" ]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+    deploy:
+      resources:
+        limits:
+          memory: 256M
+          cpus: '0.5'
+        reservations:
+          memory: 128M
+          cpus: '0.25'
     networks:
       - sub-engine-network
 
@@ -463,6 +492,7 @@ volumes:
   billing_postgres_data:
   mongo_data:
   tempo_data:
+  redis_data:
   kafka_data:
   loki_data:
   prometheus_data:
