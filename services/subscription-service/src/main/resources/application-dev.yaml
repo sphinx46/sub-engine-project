@@ -33,21 +33,17 @@ spring:
   kafka:
     bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:kafka:9092}
     producer:
-      key-serializer: org.apache.kafka.common.serialization.StringSerializer
-      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
-      retries: 3
       properties:
-        spring.json.type.mapping: subscription:mordvinov_dev.subscription_service.event.SubscriptionEvent
+        spring.json.type.mapping: premiumSubscriptionRequest:mordvinov_dev.subscription_service.event.PremiumSubscriptionRequestEvent
     consumer:
-      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
-      value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
       group-id: subscription-service-group
       auto-offset-reset: earliest
       properties:
         spring.json.trusted.packages: "*"
-        spring.json.type.mapping: subscription:mordvinov_dev.subscription_service.event.SubscriptionEvent
-    topic:
-      subscription-events: subscription.events
+        spring.json.type.mapping: premiumSubscriptionResponse:mordvinov_dev.subscription_service.event.PremiumSubscriptionResponseEvent
+    admin:
+      properties:
+        bootstrap.servers: ${KAFKA_BOOTSTRAP_SERVERS:kafka:9092}
   data:
     redis:
       host: ${REDIS_HOST:redis}
