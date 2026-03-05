@@ -4,7 +4,6 @@ import jakarta.persistence.*;
 import lombok.*;
 
 import java.math.BigDecimal;
-import java.time.Instant;
 import java.util.UUID;
 
 @Entity
@@ -40,4 +39,7 @@ public class RefundEntity extends BaseEntity {
 
     @Column(length = 256)
     private String description;
+
+    @Column(name = "refund_method_type")
+    private String refundMethodType;
 }

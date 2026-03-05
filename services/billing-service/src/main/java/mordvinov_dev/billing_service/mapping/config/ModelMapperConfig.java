@@ -2,13 +2,17 @@ package mordvinov_dev.billing_service.mapping.config;
 
 import lombok.extern.slf4j.Slf4j;
 import mordvinov_dev.billing_service.dto.response.PaymentResponse;
+import mordvinov_dev.billing_service.dto.response.RefundResponse;
 import mordvinov_dev.billing_service.entity.PaymentEntity;
+import mordvinov_dev.billing_service.entity.RefundEntity;
 import org.modelmapper.ModelMapper;
 import org.modelmapper.PropertyMap;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import ru.loolzaaa.youkassa.model.Payment;
 
 import java.time.Instant;
+import java.util.UUID;
 
 
 /**
@@ -33,7 +37,8 @@ public class ModelMapperConfig {
 
         final ModelMapper modelMapper = new ModelMapper();
 
-        configurePaymentMappings(modelMapper);
+        configurePaymentEntityMappings(modelMapper);
+        configureRefundMappings(modelMapper);
 
         modelMapper.getConfiguration()
                 .setFieldMatchingEnabled(true)
@@ -45,7 +50,26 @@ public class ModelMapperConfig {
         log.info("MODEL_MAPPER_КОНФИГУРАЦИЯ_УСПЕХ");
         return modelMapper;
     }
-    private void configurePaymentMappings(final ModelMapper modelMapper) {
+
+    private void configureRefundMappings(final ModelMapper modelMapper) {
+        modelMapper.addMappings(new PropertyMap<RefundEntity, RefundResponse>() {
+            @Override
+            protected void configure() {
+                map().setId(source.getId());
+                map().setPaymentId(source.getPaymentId());
+                map().setUserId(source.getUserId());
+                map().setRefundId(source.getRefundId());
+                map().setStatus(source.getStatus());
+                map().setAmount(source.getAmount());
+                map().setCurrency(source.getCurrency());
+                map().setDescription(source.getDescription());
+                map().setCreatedAt(Instant.from(source.getCreatedAt()));
+                map().setUpdatedAt(Instant.from(source.getUpdatedAt()));
+            }
+        });
+    }
+
+    private void configurePaymentEntityMappings(final ModelMapper modelMapper) {
         modelMapper.addMappings(new PropertyMap<PaymentEntity, PaymentResponse>() {
             @Override
             protected void configure() {

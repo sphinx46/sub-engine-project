@@ -20,6 +20,11 @@ import java.util.Map;
 @Schema(description = "Запрос на создание возврата")
 public class CreateRefundRequest {
 
+    @NotNull(message = "Payment ID is required")
+    @NotBlank(message = "Payment ID is required")
+    @Schema(description = "ID платежа в ЮKassa", example = "22e12f66-000f-5000-8000-18db351245c7", required = true)
+    private String paymentId;
+
     @NotNull(message = "Amount is required")
     @DecimalMin(value = "0.01", message = "Amount must be at least 0.01")
     @Schema(description = "Сумма возврата", example = "500.00", required = true)
@@ -33,7 +38,4 @@ public class CreateRefundRequest {
     @Size(max = 256, message = "Description cannot exceed 256 characters")
     @Schema(description = "Описание возврата", example = "Частичный возврат за неиспользованный период")
     private String description;
-
-    @Schema(description = "Метаданные возврата")
-    private Map<String, String> metadata;
 }
