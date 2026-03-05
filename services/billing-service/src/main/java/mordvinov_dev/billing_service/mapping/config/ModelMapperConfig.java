@@ -9,28 +9,14 @@ import org.modelmapper.ModelMapper;
 import org.modelmapper.PropertyMap;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import ru.loolzaaa.youkassa.model.Payment;
 
-import java.time.Instant;
-import java.util.UUID;
+import java.time.LocalDateTime;
+import java.time.ZoneOffset;
 
-
-/**
- * Конфигурационный класс для настройки ModelMapper.
- * Определяет правила маппинга между сущностями, DTO и событиями.
- * Обеспечивает корректное преобразование данных между слоями приложения.
- *
- */
 @Slf4j
 @Configuration
 public class ModelMapperConfig {
 
-    /**
-     * Создает и настраивает ModelMapper для преобразования сущностей в DTO и события.
-     * Включает сопоставление полей, пропуск null значений и доступ к приватным полям.
-     *
-     * @return настроенный экземпляр ModelMapper с определенными правилами маппинга
-     */
     @Bean
     public ModelMapper modelMapper() {
         log.info("MODEL_MAPPER_КОНФИГУРАЦИЯ_НАЧАЛО");
@@ -63,8 +49,16 @@ public class ModelMapperConfig {
                 map().setAmount(source.getAmount());
                 map().setCurrency(source.getCurrency());
                 map().setDescription(source.getDescription());
-                map().setCreatedAt(Instant.from(source.getCreatedAt()));
-                map().setUpdatedAt(Instant.from(source.getUpdatedAt()));
+
+                using(ctx -> {
+                    LocalDateTime dateTime = (LocalDateTime) ctx.getSource();
+                    return dateTime != null ? dateTime.toInstant(ZoneOffset.UTC) : null;
+                }).map(source.getCreatedAt()).setCreatedAt(null);
+
+                using(ctx -> {
+                    LocalDateTime dateTime = (LocalDateTime) ctx.getSource();
+                    return dateTime != null ? dateTime.toInstant(ZoneOffset.UTC) : null;
+                }).map(source.getUpdatedAt()).setUpdatedAt(null);
             }
         });
     }
@@ -83,8 +77,16 @@ public class ModelMapperConfig {
                 map().setDescription(source.getDescription());
                 map().setPaymentMethodId(source.getPaymentMethodId());
                 map().setPaymentMethodType(source.getPaymentMethodType());
-                map().setCreatedAt(Instant.from(source.getCreatedAt()));
-                map().setUpdatedAt(Instant.from(source.getUpdatedAt()));
+
+                using(ctx -> {
+                    LocalDateTime dateTime = (LocalDateTime) ctx.getSource();
+                    return dateTime != null ? dateTime.toInstant(ZoneOffset.UTC) : null;
+                }).map(source.getCreatedAt()).setCreatedAt(null);
+
+                using(ctx -> {
+                    LocalDateTime dateTime = (LocalDateTime) ctx.getSource();
+                    return dateTime != null ? dateTime.toInstant(ZoneOffset.UTC) : null;
+                }).map(source.getUpdatedAt()).setUpdatedAt(null);
             }
         });
     }

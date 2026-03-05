@@ -1,9 +1,9 @@
 spring:
   datasource:
-    url: jdbc:postgresql://localhost:5432/billing_test
+    url: jdbc:tc:postgresql:17-alpine:///billing_test
+    driver-class-name: org.testcontainers.jdbc.ContainerDatabaseDriver
     username: test_user
     password: test_password
-    driver-class-name: org.postgresql.Driver
     hikari:
       maximum-pool-size: 5
       minimum-idle: 2
@@ -26,7 +26,7 @@ spring:
     enabled: false
 
   kafka:
-    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
+    bootstrap-servers: ${spring.embedded.kafka.brokers:localhost:9092}
     producer:
       key-serializer: org.apache.kafka.common.serialization.StringSerializer
       value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
