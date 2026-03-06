@@ -12,6 +12,7 @@ import mordvinov_dev.subscription_service.entity.enums.StatusType;
 import mordvinov_dev.subscription_service.exception.InvalidSubscriptionStatusException;
 import mordvinov_dev.subscription_service.exception.SubscriptionAlreadyCancelledException;
 import mordvinov_dev.subscription_service.mapping.EntityMapper;
+import mordvinov_dev.subscription_service.producer.PremiumSubscriptionProducer;
 import mordvinov_dev.subscription_service.repository.SubscriptionRepository;
 import mordvinov_dev.subscription_service.service.SubscriptionService;
 import mordvinov_dev.subscription_service.validation.SubscriptionOwnershipValidator;
@@ -31,6 +32,7 @@ public class SubscriptionServiceImpl implements SubscriptionService {
     private final SubscriptionRepository subscriptionRepository;
     private final EntityMapper entityMapper;
     private final SubscriptionOwnershipValidator ownershipValidator;
+    private final PremiumSubscriptionProducer premiumSubscriptionProducer;
 
     @Override
     @Transactional
@@ -45,6 +47,10 @@ public class SubscriptionServiceImpl implements SubscriptionService {
 
         Subscription savedSubscription = subscriptionRepository.save(subscription);
         log.info("Subscription created with id: {}", savedSubscription.getId());
+
+        if (request.getPlanType() == PlanType.PREMIUM) {
+            premiumSubscriptionProducer.sendPremiumSubscriptionRequest(savedSubscription, userId);
+        }
 
         return entityMapper.map(savedSubscription, SubscriptionResponse.class);
     }
@@ -129,6 +135,10 @@ public class SubscriptionServiceImpl implements SubscriptionService {
 
         Subscription updatedSubscription = subscriptionRepository.save(subscription);
         log.info("Subscription plan updated: {}", subscriptionId);
+
+        if (newPlan == PlanType.PREMIUM) {
+            premiumSubscriptionProducer.sendPremiumSubscriptionRequest(updatedSubscription, userId);
+        }
 
         return entityMapper.map(updatedSubscription, SubscriptionResponse.class);
     }

@@ -16,10 +16,10 @@ public class PremiumSubscriptionResponseEvent {
     private UUID eventId;
     private String eventType = "PREMIUM_SUBSCRIPTION_RESPONSE";
     private LocalDateTime timestamp;
-
     private UUID subscriptionId;
     private UUID userId;
     private String paymentId;
+    private String confirmationUrl;
     private String status;
     private String message;
 }
