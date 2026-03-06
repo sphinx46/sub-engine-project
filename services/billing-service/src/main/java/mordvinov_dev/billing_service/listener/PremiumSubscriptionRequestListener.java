@@ -26,7 +26,7 @@ public class PremiumSubscriptionRequestListener {
             groupId = "${spring.kafka.consumer.group-id:billing-service-group}",
             containerFactory = "premiumSubscriptionRequestKafkaListenerContainerFactory"
     )
-    public void onPremiumSubscriptionRequest(@Payload final PremiumSubscriptionRequestEvent event) {
+    public void onPremiumSubscriptionRequest(@Payload PremiumSubscriptionRequestEvent event) {
         log.info("Received premium subscription request, eventId={}, userId={}, subscriptionId={}, amount={}",
                 event.getEventId(), event.getUserId(), event.getSubscriptionId(), event.getAmount());
 
@@ -48,24 +48,12 @@ public class PremiumSubscriptionRequestListener {
 
             PaymentResponse paymentResponse = paymentService.createPayment(paymentRequest, event.getUserId());
 
-            premiumSubscriptionProducer.sendSuccessResponse(
-                    event.getSubscriptionId(),
-                    event.getUserId(),
-                    paymentResponse
-            );
-
-            log.info("Premium subscription request processed successfully, paymentId={}, userId={}",
-                    paymentResponse.getPaymentId(), event.getUserId());
+            log.info("Premium subscription request processed successfully, paymentId={}, userId={}, confirmationUrl={}",
+                    paymentResponse.getPaymentId(), event.getUserId(), paymentResponse.getConfirmationUrl());
 
         } catch (Exception e) {
             log.error("Error processing premium subscription request, userId={}, subscriptionId={}, error={}",
                     event.getUserId(), event.getSubscriptionId(), e.getMessage(), e);
-
-            premiumSubscriptionProducer.sendFailureResponse(
-                    event.getSubscriptionId(),
-                    event.getUserId(),
-                    "Failed to create payment: " + e.getMessage()
-            );
         }
     }
 }

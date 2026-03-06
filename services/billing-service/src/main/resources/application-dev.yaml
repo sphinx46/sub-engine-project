@@ -10,6 +10,7 @@ spring:
       connection-timeout: 30000
       idle-timeout: 600000
       max-lifetime: 1800000
+
   jpa:
     hibernate:
       ddl-auto: validate
@@ -22,6 +23,7 @@ spring:
           batch_size: 20
         order_inserts: true
         order_updates: true
+
   flyway:
     enabled: true
     locations: classpath:db/migration
@@ -29,81 +31,34 @@ spring:
     baseline-version: 0
     validate-on-migrate: false
     clean-disabled: true
+
   kafka:
     bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:kafka:9092}
     producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
       properties:
         spring.json.type.mapping: premiumSubscriptionResponse:mordvinov_dev.billing_service.event.PremiumSubscriptionResponseEvent
     consumer:
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
       group-id: billing-service-group
       auto-offset-reset: earliest
+      enable-auto-commit: false
       properties:
-        spring.json.trusted.packages: "*"
-        spring.json.type.mapping: premiumSubscriptionRequest:mordvinov_dev.billing_service.event.PremiumSubscriptionRequestEvent
+        spring.json.trusted.packages: mordvinov_dev.billing_service.event
+        spring.json.value.default.type: mordvinov_dev.billing_service.event.PremiumSubscriptionRequestEvent
+        spring.json.use.type.headers: false
     admin:
       properties:
         bootstrap.servers: ${KAFKA_BOOTSTRAP_SERVERS:kafka:9092}
+
   security:
     oauth2:
       resourceserver:
         jwt:
           issuer-uri: ${KEYCLOAK_ISSUER_URI:http://keycloak:8080/realms/sub-engine}
           jwk-set-uri: ${KEYCLOAK_ISSUER_URI:http://keycloak:8080/realms/sub-engine}/protocol/openid-connect/certs
-
-eureka:
-  client:
-    service-url:
-      defaultZone: http://eureka-server:8761/eureka/
-    enabled: true
-    fetch-registry: true
-    register-with-eureka: true
-    registry-fetch-interval-seconds: 5
-    instance-info-replication-interval-seconds: 5
-    initial-instance-info-replication-interval-seconds: 5
-  instance:
-    hostname: billing-service
-    prefer-ip-address: true
-    instance-id: ${spring.application.name}:${random.value}
-    lease-renewal-interval-in-seconds: 5
-    lease-expiration-duration-in-seconds: 15
-
-server:
-  port: ${BILLING_SERVICE_PORT:8080}
-  tomcat:
-    max-connections: 200
-    max-threads: 50
-    min-spare-threads: 10
-    connection-timeout: 5000
-  error:
-    include-message: always
-    include-binding-errors: always
-
-management:
-  endpoints:
-    web:
-      exposure:
-        include: health,info,metrics,prometheus
-  endpoint:
-    health:
-      show-details: always
-  metrics:
-    export:
-      prometheus:
-        enabled: true
-  tracing:
-    enabled: false
-    sampling:
-      probability: 1.0
-  zipkin:
-    tracing:
-      endpoint: http://tempo:9411/api/v2/spans
-
-logging:
-  level:
-    mordvinov_dev.billing_service: DEBUG
-    org.springframework.web: INFO
-    org.springframework.security: INFO
-    org.flywaydb: INFO
 
 youkassa:
   shop-id: ${YOOKASSA_SHOP_ID}

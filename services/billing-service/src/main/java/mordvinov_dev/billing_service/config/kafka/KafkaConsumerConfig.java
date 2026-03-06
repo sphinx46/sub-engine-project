@@ -1,6 +1,7 @@
 package mordvinov_dev.billing_service.config.kafka;
 
 import lombok.extern.slf4j.Slf4j;
+import mordvinov_dev.billing_service.event.PremiumSubscriptionRequestEvent;
 import mordvinov_dev.billing_service.event.PremiumSubscriptionResponseEvent;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.common.serialization.StringDeserializer;
@@ -25,10 +26,10 @@ public class KafkaConsumerConfig {
     @Value("${spring.kafka.bootstrap-servers}")
     private String bootstrapServers;
 
-    @Value("${spring.kafka.consumer.group-id:subscription-service-group}")
+    @Value("${spring.kafka.consumer.group-id:billing-service-group}")
     private String groupId;
 
-    private Map<String, Object> consumerConfig(Class<?> clazz) {
+    private Map<String, Object> consumerConfig() {
         Map<String, Object> config = new HashMap<>();
         config.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers);
         config.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
@@ -36,29 +37,34 @@ public class KafkaConsumerConfig {
         config.put(ConsumerConfig.GROUP_ID_CONFIG, groupId);
         config.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest");
         config.put(ConsumerConfig.ENABLE_AUTO_COMMIT_CONFIG, false);
+
         config.put(ErrorHandlingDeserializer.KEY_DESERIALIZER_CLASS, StringDeserializer.class);
-        config.put(ErrorHandlingDeserializer.VALUE_DESERIALIZER_CLASS, JsonDeserializer.class);
+        config.put(ErrorHandlingDeserializer.VALUE_DESERIALIZER_CLASS, JsonDeserializer.class.getName());
+
+        config.put(JsonDeserializer.TRUSTED_PACKAGES, "mordvinov_dev.billing_service.event");
+        config.put(JsonDeserializer.TYPE_MAPPINGS,
+                "premiumSubscriptionRequest:mordvinov_dev.billing_service.event.PremiumSubscriptionRequestEvent");
+        config.put(JsonDeserializer.USE_TYPE_INFO_HEADERS, false);
+        config.put(JsonDeserializer.VALUE_DEFAULT_TYPE, PremiumSubscriptionRequestEvent.class.getName());
 
         return config;
     }
 
-    private <T> ConsumerFactory<String, T> createConsumerFactory(Class<T> clazz) {
-        JsonDeserializer<T> jsonDeserializer = new JsonDeserializer<>(clazz);
-        jsonDeserializer.setUseTypeMapperForKey(false);
-        ErrorHandlingDeserializer<T> errorHandlingDeserializer = new ErrorHandlingDeserializer<>(jsonDeserializer);
+    @Bean
+    public ConsumerFactory<String, PremiumSubscriptionRequestEvent> premiumSubscriptionRequestConsumerFactory() {
         return new DefaultKafkaConsumerFactory<>(
-                consumerConfig(clazz),
+                consumerConfig(),
                 new StringDeserializer(),
-                errorHandlingDeserializer
+                new ErrorHandlingDeserializer<>(new JsonDeserializer<>(PremiumSubscriptionRequestEvent.class))
         );
     }
 
     @Bean
-    public ConcurrentKafkaListenerContainerFactory<String, PremiumSubscriptionResponseEvent>
-    premiumSubscriptionResponseKafkaListenerContainerFactory() {
-        ConcurrentKafkaListenerContainerFactory<String, PremiumSubscriptionResponseEvent> factory =
+    public ConcurrentKafkaListenerContainerFactory<String, PremiumSubscriptionRequestEvent>
+    premiumSubscriptionRequestKafkaListenerContainerFactory() {
+        ConcurrentKafkaListenerContainerFactory<String, PremiumSubscriptionRequestEvent> factory =
                 new ConcurrentKafkaListenerContainerFactory<>();
-        factory.setConsumerFactory(createConsumerFactory(PremiumSubscriptionResponseEvent.class));
+        factory.setConsumerFactory(premiumSubscriptionRequestConsumerFactory());
         factory.setConcurrency(3);
         return factory;
     }

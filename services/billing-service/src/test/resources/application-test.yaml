@@ -8,6 +8,7 @@ spring:
       maximum-pool-size: 5
       minimum-idle: 2
       connection-timeout: 30000
+
   jpa:
     hibernate:
       ddl-auto: create-drop
@@ -20,11 +21,24 @@ spring:
           batch_size: 5
         order_inserts: true
         order_updates: true
+
   flyway:
     enabled: false
+
   kafka:
-    enabled: false
     bootstrap-servers: ${spring.embedded.kafka.brokers:localhost:9092}
+    consumer:
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
+      group-id: billing-service-test
+      auto-offset-reset: earliest
+      enable-auto-commit: false
+      properties:
+        spring.json.trusted.packages: mordvinov_dev.billing_service.event
+        spring.json.type.mapping: premiumSubscriptionRequest:mordvinov_dev.billing_service.event.PremiumSubscriptionRequestEvent,premiumSubscriptionResponse:mordvinov_dev.billing_service.event.PremiumSubscriptionResponseEvent
+    listener:
+      auto-startup: false
+
   security:
     oauth2:
       resourceserver:
@@ -62,6 +76,7 @@ logging:
     org.hibernate.type.descriptor.sql: TRACE
     com.netflix.discovery: OFF
     org.springframework.cloud.netflix.eureka: OFF
+    org.apache.kafka: INFO
 
 youkassa:
   shop-id: test_shop_id
