@@ -2,6 +2,7 @@ package mordvinov_dev.subscription_service.service.impl;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import mordvinov_dev.subscription_service.client.BillingServiceClient;
 import mordvinov_dev.subscription_service.dto.request.CreateSubscriptionRequest;
 import mordvinov_dev.subscription_service.dto.request.pageable.PageRequest;
 import mordvinov_dev.subscription_service.dto.response.SubscriptionResponse;
@@ -35,11 +36,12 @@ public class SubscriptionServiceImpl implements SubscriptionService {
     private final EntityMapper entityMapper;
     private final SubscriptionOwnershipValidator ownershipValidator;
     private final PremiumSubscriptionProducer premiumSubscriptionProducer;
+    private final BillingServiceClient billingServiceClient;
 
     @Override
     @Transactional
     public SubscriptionResponse createSubscription(CreateSubscriptionRequest request, UUID userId) {
-        log.info("Creating subscription for user: {}", userId);
+        log.info("Creating subscription for user: {}, planType: {}", userId, request.getPlanType());
 
         Subscription subscription = entityMapper.map(request, Subscription.class);
         subscription.setUserId(userId);
@@ -54,13 +56,25 @@ public class SubscriptionServiceImpl implements SubscriptionService {
         }
 
         Subscription savedSubscription = subscriptionRepository.save(subscription);
-        log.info("Subscription created with id: {}, status: {}", savedSubscription.getId(), savedSubscription.getStatus());
+        log.info("Subscription saved with id: {}, status: {}", savedSubscription.getId(), savedSubscription.getStatus());
 
         SubscriptionResponse response = entityMapper.map(savedSubscription, SubscriptionResponse.class);
 
         if (request.getPlanType() == PlanType.PREMIUM) {
+            try {
+                log.info("Initiating synchronous payment creation for premium subscription: {}, user: {}", savedSubscription.getId(), userId);
+                String confirmationUrl = billingServiceClient.createPayment(savedSubscription.getId(), userId);
+                response.setConfirmationUrl(confirmationUrl);
+                response.setMessage("Subscription created. Please complete payment using the provided URL to activate.");
+                log.info("Payment initiated successfully for subscription: {}, confirmationUrl obtained", savedSubscription.getId());
+            } catch (Exception e) {
+                log.error("Failed to create payment for subscription: {}, user: {}, error: {}",
+                        savedSubscription.getId(), userId, e.getMessage(), e);
+                response.setMessage("Subscription created but payment initiation failed. Please try again later.");
+            }
+
+            log.info("Sending async premium subscription request to Kafka for subscription: {}", savedSubscription.getId());
             premiumSubscriptionProducer.sendPremiumSubscriptionRequest(savedSubscription, userId);
-            response.setMessage("Subscription created. Please complete payment to activate.");
         }
 
         return response;
@@ -68,9 +82,10 @@ public class SubscriptionServiceImpl implements SubscriptionService {
 
     @Override
     public PageResponse<SubscriptionResponse> getUserSubscriptions(UUID userId, PageRequest pageRequest) {
-        log.debug("Fetching subscriptions for user: {}, page: {}", userId, pageRequest.getPageNumber());
+        log.debug("Fetching subscriptions for user: {}, page: {}, size: {}", userId, pageRequest.getPageNumber(), pageRequest.getSize());
 
         Page<Subscription> subscriptions = subscriptionRepository.findAllByUserId(userId, pageRequest.toPageable());
+        log.debug("Found {} total subscriptions for user: {}", subscriptions.getTotalElements(), userId);
 
         return PageResponse.<SubscriptionResponse>builder()
                 .content(entityMapper.mapList(subscriptions.getContent(), SubscriptionResponse.class))
@@ -85,9 +100,10 @@ public class SubscriptionServiceImpl implements SubscriptionService {
 
     @Override
     public PageResponse<SubscriptionResponse> getUserSubscriptionsByStatus(UUID userId, StatusType status, PageRequest pageRequest) {
-        log.debug("Fetching {} subscriptions for user: {}, page: {}", status, userId, pageRequest.getPageNumber());
+        log.debug("Fetching {} subscriptions for user: {}, page: {}, size: {}", status, userId, pageRequest.getPageNumber(), pageRequest.getSize());
 
         Page<Subscription> subscriptions = subscriptionRepository.findAllByUserIdAndStatus(userId, status, pageRequest.toPageable());
+        log.debug("Found {} total {} subscriptions for user: {}", subscriptions.getTotalElements(), status, userId);
 
         return PageResponse.<SubscriptionResponse>builder()
                 .content(entityMapper.mapList(subscriptions.getContent(), SubscriptionResponse.class))
@@ -108,10 +124,13 @@ public class SubscriptionServiceImpl implements SubscriptionService {
         Subscription subscription = ownershipValidator.validateAndGetSubscription(subscriptionId, userId);
 
         if (subscription.getStatus() == StatusType.CANCELLED) {
+            log.warn("Attempt to cancel already cancelled subscription: {}, user: {}", subscriptionId, userId);
             throw new SubscriptionAlreadyCancelledException(subscriptionId);
         }
 
         if (subscription.getStatus() != StatusType.ACTIVE && subscription.getStatus() != StatusType.PENDING) {
+            log.warn("Invalid status for cancellation: subscription={}, currentStatus={}, requiredStatus={}, user={}",
+                    subscriptionId, subscription.getStatus(), StatusType.ACTIVE, userId);
             throw new InvalidSubscriptionStatusException(subscriptionId, subscription.getStatus(), StatusType.ACTIVE);
         }
 
@@ -119,7 +138,7 @@ public class SubscriptionServiceImpl implements SubscriptionService {
         subscription.setUpdatedAt(LocalDateTime.now());
 
         Subscription updatedSubscription = subscriptionRepository.save(subscription);
-        log.info("Subscription cancelled: {}", subscriptionId);
+        log.info("Subscription cancelled successfully: {}, user: {}", subscriptionId, userId);
 
         return entityMapper.map(updatedSubscription, SubscriptionResponse.class);
     }
@@ -127,7 +146,9 @@ public class SubscriptionServiceImpl implements SubscriptionService {
     @Override
     public long getUserActiveSubscriptionsCount(UUID userId) {
         log.debug("Counting active subscriptions for user: {}", userId);
-        return subscriptionRepository.countByUserIdAndStatus(userId, StatusType.ACTIVE);
+        long count = subscriptionRepository.countByUserIdAndStatus(userId, StatusType.ACTIVE);
+        log.debug("User: {} has {} active subscriptions", userId, count);
+        return count;
     }
 
     @Override
@@ -138,6 +159,8 @@ public class SubscriptionServiceImpl implements SubscriptionService {
         Subscription subscription = ownershipValidator.validateAndGetSubscription(subscriptionId, userId);
 
         if (subscription.getStatus() != StatusType.ACTIVE) {
+            log.warn("Invalid status for plan update: subscription={}, currentStatus={}, requiredStatus={}, user={}",
+                    subscriptionId, subscription.getStatus(), StatusType.ACTIVE, userId);
             throw new InvalidSubscriptionStatusException(subscriptionId, subscription.getStatus(), StatusType.ACTIVE);
         }
 
@@ -145,7 +168,7 @@ public class SubscriptionServiceImpl implements SubscriptionService {
         subscription.setUpdatedAt(LocalDateTime.now());
 
         Subscription updatedSubscription = subscriptionRepository.save(subscription);
-        log.info("Subscription plan updated: {}", subscriptionId);
+        log.info("Subscription plan updated: {}, user: {}, newPlan: {}", subscriptionId, userId, newPlan);
 
         SubscriptionResponse response = entityMapper.map(updatedSubscription, SubscriptionResponse.class);
 
@@ -153,10 +176,23 @@ public class SubscriptionServiceImpl implements SubscriptionService {
             subscription.setStatus(StatusType.PENDING);
             subscription.setNextBillingDate(null);
             subscriptionRepository.save(subscription);
+            log.info("Subscription status set to PENDING for premium upgrade: {}, user: {}", subscriptionId, userId);
 
+            try {
+                log.info("Initiating synchronous payment creation for premium upgrade: {}, user: {}", subscriptionId, userId);
+                String confirmationUrl = billingServiceClient.createPayment(subscriptionId, userId);
+                response.setConfirmationUrl(confirmationUrl);
+                response.setStatus(StatusType.PENDING);
+                response.setMessage("Plan updated to PREMIUM. Please complete payment using the provided URL to activate.");
+                log.info("Payment initiated successfully for premium upgrade: {}, confirmationUrl obtained", subscriptionId);
+            } catch (Exception e) {
+                log.error("Failed to create payment for premium upgrade: {}, user: {}, error: {}",
+                        subscriptionId, userId, e.getMessage(), e);
+                response.setMessage("Plan updated to PREMIUM but payment initiation failed. Please try again later.");
+            }
+
+            log.info("Sending async premium subscription request to Kafka for upgrade: {}", subscriptionId);
             premiumSubscriptionProducer.sendPremiumSubscriptionRequest(updatedSubscription, userId);
-            response.setStatus(StatusType.PENDING);
-            response.setMessage("Plan updated to PREMIUM. Please complete payment to activate.");
         }
 
         return response;
@@ -164,8 +200,13 @@ public class SubscriptionServiceImpl implements SubscriptionService {
 
     @Transactional
     public void activatePremiumSubscription(UUID subscriptionId) {
+        log.info("Activating premium subscription: {}", subscriptionId);
+
         Subscription subscription = subscriptionRepository.findById(subscriptionId)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Subscription not found"));
+                .orElseThrow(() -> {
+                    log.error("Subscription not found for activation: {}", subscriptionId);
+                    return new ResponseStatusException(HttpStatus.NOT_FOUND, "Subscription not found");
+                });
 
         subscription.setStatus(StatusType.ACTIVE);
         subscription.setNextBillingDate(LocalDateTime.now().plusMonths(1));
@@ -177,8 +218,13 @@ public class SubscriptionServiceImpl implements SubscriptionService {
 
     @Transactional
     public void failPremiumSubscription(UUID subscriptionId) {
+        log.info("Failing premium subscription: {}", subscriptionId);
+
         Subscription subscription = subscriptionRepository.findById(subscriptionId)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Subscription not found"));
+                .orElseThrow(() -> {
+                    log.error("Subscription not found for fail: {}", subscriptionId);
+                    return new ResponseStatusException(HttpStatus.NOT_FOUND, "Subscription not found");
+                });
 
         subscription.setStatus(StatusType.FAILED);
         subscription.setUpdatedAt(LocalDateTime.now());

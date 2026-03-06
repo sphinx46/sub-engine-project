@@ -36,6 +36,9 @@ public class SubscriptionResponse {
     @Schema(description = "Сообщение для пользователя", example = "Subscription created. Please complete payment to activate.")
     private String message;
 
+    @Schema(description = "URL для подтверждения платежа", example = "https://yoomoney.ru/api-pages/v2/payment-confirm/epl?orderId=22e12f66-000f-5000-8000-18db351245c7")
+    private String confirmationUrl;
+
     @Schema(description = "Дата создания", example = "2026-03-02T10:30:00")
     private LocalDateTime createdAt;
 

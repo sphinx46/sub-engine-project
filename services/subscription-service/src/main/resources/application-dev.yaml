@@ -142,3 +142,6 @@ resilience4j:
         retry-exceptions:
           - org.springframework.dao.DataAccessException
           - java.net.ConnectException
+services:
+  gateway:
+    url: ${GATEWAY_URL:http://api-gateway:8084}

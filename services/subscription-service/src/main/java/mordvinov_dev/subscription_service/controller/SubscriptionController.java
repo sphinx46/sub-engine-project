@@ -26,7 +26,10 @@ public class SubscriptionController {
     @PostMapping
     public ResponseEntity<SubscriptionResponse> createSubscription(@RequestBody CreateSubscriptionRequest request,
                                                                    @RequestHeader("X-User-Id") UUID userId) {
+        log.info("Received create subscription request for user: {}, planType: {}", userId, request.getPlanType());
         SubscriptionResponse response = subscriptionService.createSubscription(request, userId);
+        log.info("Subscription created successfully for user: {}, subscriptionId: {}, hasConfirmationUrl: {}",
+                userId, response.getId(), response.getConfirmationUrl() != null);
         return ResponseEntity.ok(response);
     }
 
@@ -37,6 +40,7 @@ public class SubscriptionController {
                                                                                    @RequestParam(defaultValue = "createdAt", required = false) final String sortedBy,
                                                                                    @RequestParam(defaultValue = "DESC", required = false) final String direction) {
 
+        log.debug("Fetching subscriptions for user: {}, page: {}, size: {}", userId, pageNumber, size);
         var pageRequest = PageRequest.builder()
                 .pageNumber(pageNumber)
                 .size(size)
@@ -45,6 +49,7 @@ public class SubscriptionController {
                 .build();
 
         PageResponse<SubscriptionResponse> response = subscriptionService.getUserSubscriptions(userId, pageRequest);
+        log.debug("Found {} subscriptions for user: {}", response.getContent().size(), userId);
         return ResponseEntity.ok(response);
     }
 
@@ -57,6 +62,7 @@ public class SubscriptionController {
             @RequestParam(defaultValue = "createdAt", required = false) final String sortedBy,
             @RequestParam(defaultValue = "DESC", required = false) final String direction) {
 
+        log.debug("Fetching {} subscriptions for user: {}, page: {}, size: {}", status, userId, pageNumber, size);
         var pageRequest = PageRequest.builder()
                 .pageNumber(pageNumber)
                 .size(size)
@@ -65,19 +71,24 @@ public class SubscriptionController {
                 .build();
 
         PageResponse<SubscriptionResponse> response = subscriptionService.getUserSubscriptionsByStatus(userId, status, pageRequest);
+        log.debug("Found {} {} subscriptions for user: {}", response.getContent().size(), status, userId);
         return ResponseEntity.ok(response);
     }
 
     @PatchMapping("/{subscriptionId}/cancel")
     public ResponseEntity<SubscriptionResponse> cancelSubscription(@PathVariable UUID subscriptionId,
                                                                    @RequestHeader("X-User-Id") UUID userId) {
+        log.info("Received cancel request for subscription: {}, user: {}", subscriptionId, userId);
         SubscriptionResponse response = subscriptionService.cancelSubscription(subscriptionId, userId);
+        log.info("Subscription cancelled successfully: {}, user: {}", subscriptionId, userId);
         return ResponseEntity.ok(response);
     }
 
     @GetMapping("/{userId}/active/count")
     public ResponseEntity<Long> getUserActiveSubscriptionsCount(@PathVariable UUID userId) {
+        log.debug("Counting active subscriptions for user: {}", userId);
         long count = subscriptionService.getUserActiveSubscriptionsCount(userId);
+        log.debug("User: {} has {} active subscriptions", userId, count);
         return ResponseEntity.ok(count);
     }
 
@@ -85,7 +96,9 @@ public class SubscriptionController {
     public ResponseEntity<SubscriptionResponse> updateSubscriptionPlan(@PathVariable UUID subscriptionId,
                                                                        @RequestHeader("X-User-Id") UUID userId,
                                                                        @RequestParam PlanType newPlan) {
+        log.info("Received plan update request for subscription: {}, user: {}, newPlan: {}", subscriptionId, userId, newPlan);
         SubscriptionResponse response = subscriptionService.updateSubscriptionPlan(subscriptionId, userId, newPlan);
+        log.info("Plan updated successfully for subscription: {}, user: {}, newPlan: {}", subscriptionId, userId, newPlan);
         return ResponseEntity.ok(response);
     }
 }
