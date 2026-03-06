@@ -62,19 +62,19 @@ public class SubscriptionServiceImpl implements SubscriptionService {
 
         if (request.getPlanType() == PlanType.PREMIUM) {
             try {
-                log.info("Initiating synchronous payment creation for premium subscription: {}, user: {}", savedSubscription.getId(), userId);
+                log.info("Creating payment for premium subscription: {}, user: {}", savedSubscription.getId(), userId);
                 String confirmationUrl = billingServiceClient.createPayment(savedSubscription.getId(), userId);
                 response.setConfirmationUrl(confirmationUrl);
                 response.setMessage("Subscription created. Please complete payment using the provided URL to activate.");
-                log.info("Payment initiated successfully for subscription: {}, confirmationUrl obtained", savedSubscription.getId());
+                log.info("Payment created successfully for subscription: {}", savedSubscription.getId());
+
             } catch (Exception e) {
                 log.error("Failed to create payment for subscription: {}, user: {}, error: {}",
                         savedSubscription.getId(), userId, e.getMessage(), e);
-                response.setMessage("Subscription created but payment initiation failed. Please try again later.");
+                log.info("Sending async premium subscription request as fallback for subscription: {}", savedSubscription.getId());
+                premiumSubscriptionProducer.sendPremiumSubscriptionRequest(savedSubscription, userId);
+                response.setMessage("Subscription created but payment initiation failed. You will receive payment link shortly.");
             }
-
-            log.info("Sending async premium subscription request to Kafka for subscription: {}", savedSubscription.getId());
-            premiumSubscriptionProducer.sendPremiumSubscriptionRequest(savedSubscription, userId);
         }
 
         return response;

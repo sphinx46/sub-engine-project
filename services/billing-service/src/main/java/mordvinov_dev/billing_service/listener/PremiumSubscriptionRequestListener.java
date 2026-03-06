@@ -5,7 +5,6 @@ import lombok.extern.slf4j.Slf4j;
 import mordvinov_dev.billing_service.dto.request.CreatePaymentRequest;
 import mordvinov_dev.billing_service.dto.response.PaymentResponse;
 import mordvinov_dev.billing_service.event.PremiumSubscriptionRequestEvent;
-import mordvinov_dev.billing_service.producer.PremiumSubscriptionProducer;
 import mordvinov_dev.billing_service.service.PaymentService;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.messaging.handler.annotation.Payload;
@@ -19,7 +18,6 @@ import java.util.HashMap;
 public class PremiumSubscriptionRequestListener {
 
     private final PaymentService paymentService;
-    private final PremiumSubscriptionProducer premiumSubscriptionProducer;
 
     @KafkaListener(
             topics = "${kafka.topics.premium-subscription-request:premium-subscription-request}",
