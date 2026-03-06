@@ -17,7 +17,6 @@ public class PremiumSubscriptionRequestEvent {
     private UUID eventId;
     private String eventType = "PREMIUM_SUBSCRIPTION_REQUEST";
     private LocalDateTime timestamp;
-
     private UUID subscriptionId;
     private UUID userId;
     private BigDecimal amount;

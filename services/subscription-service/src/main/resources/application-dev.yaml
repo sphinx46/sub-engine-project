@@ -116,13 +116,8 @@ management:
 
 logging:
   level:
-    org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerMapping: TRACE
-    org.hibernate.SQL: DEBUG
-    org.hibernate.type.descriptor.sql: TRACE
-    org.springframework.security.oauth2: DEBUG
-    org.springframework.security.oauth2.jwt: DEBUG
-    com.netflix.discovery: DEBUG
-    org.springframework.cloud.netflix.eureka: DEBUG
+    mordvinov_dev.subscripton_service: DEBUG
+    org.hibernate.SQL: INFO
     org.flywaydb: DEBUG
   pattern:
     level: '%5p [${spring.application.name:},%X{traceId:-},%X{spanId:-}]'

@@ -5,10 +5,10 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import mordvinov_dev.billing_service.entity.PaymentEntity;
 import mordvinov_dev.billing_service.entity.RefundEntity;
+import mordvinov_dev.billing_service.producer.PremiumSubscriptionProducer;
 import mordvinov_dev.billing_service.repository.PaymentRepository;
 import mordvinov_dev.billing_service.repository.RefundRepository;
 import mordvinov_dev.billing_service.service.WebhookService;
-import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -22,6 +22,7 @@ public class WebhookServiceImpl implements WebhookService {
 
     private final PaymentRepository paymentRepository;
     private final RefundRepository refundRepository;
+    private final PremiumSubscriptionProducer premiumSubscriptionProducer;
 
     @Override
     @Transactional
@@ -70,6 +71,15 @@ public class WebhookServiceImpl implements WebhookService {
             paymentRepository.save(payment);
 
             log.info("Updated payment {} status from {} to {}", paymentId, oldStatus, newStatus);
+
+            if ("succeeded".equals(newStatus) && payment.getSubscriptionId() != null) {
+                premiumSubscriptionProducer.sendPaymentSuccessResponse(
+                        payment.getSubscriptionId(),
+                        payment.getUserId(),
+                        paymentId
+                );
+                log.info("Payment success notification sent for subscription {}", payment.getSubscriptionId());
+            }
         }
     }
 

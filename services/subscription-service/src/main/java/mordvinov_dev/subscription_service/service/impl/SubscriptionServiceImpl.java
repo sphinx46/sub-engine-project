@@ -17,8 +17,10 @@ import mordvinov_dev.subscription_service.repository.SubscriptionRepository;
 import mordvinov_dev.subscription_service.service.SubscriptionService;
 import mordvinov_dev.subscription_service.validation.SubscriptionOwnershipValidator;
 import org.springframework.data.domain.Page;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.time.LocalDateTime;
 import java.util.UUID;
@@ -42,17 +44,26 @@ public class SubscriptionServiceImpl implements SubscriptionService {
         Subscription subscription = entityMapper.map(request, Subscription.class);
         subscription.setUserId(userId);
         subscription.setPlanType(request.getPlanType() != null ? request.getPlanType() : PlanType.FREE);
-        subscription.setStatus(StatusType.ACTIVE);
-        subscription.setNextBillingDate(LocalDateTime.now().plusMonths(1));
+
+        if (request.getPlanType() == PlanType.PREMIUM) {
+            subscription.setStatus(StatusType.PENDING);
+            subscription.setNextBillingDate(null);
+        } else {
+            subscription.setStatus(StatusType.ACTIVE);
+            subscription.setNextBillingDate(LocalDateTime.now().plusMonths(1));
+        }
 
         Subscription savedSubscription = subscriptionRepository.save(subscription);
-        log.info("Subscription created with id: {}", savedSubscription.getId());
+        log.info("Subscription created with id: {}, status: {}", savedSubscription.getId(), savedSubscription.getStatus());
+
+        SubscriptionResponse response = entityMapper.map(savedSubscription, SubscriptionResponse.class);
 
         if (request.getPlanType() == PlanType.PREMIUM) {
             premiumSubscriptionProducer.sendPremiumSubscriptionRequest(savedSubscription, userId);
+            response.setMessage("Subscription created. Please complete payment to activate.");
         }
 
-        return entityMapper.map(savedSubscription, SubscriptionResponse.class);
+        return response;
     }
 
     @Override
@@ -100,7 +111,7 @@ public class SubscriptionServiceImpl implements SubscriptionService {
             throw new SubscriptionAlreadyCancelledException(subscriptionId);
         }
 
-        if (subscription.getStatus() != StatusType.ACTIVE) {
+        if (subscription.getStatus() != StatusType.ACTIVE && subscription.getStatus() != StatusType.PENDING) {
             throw new InvalidSubscriptionStatusException(subscriptionId, subscription.getStatus(), StatusType.ACTIVE);
         }
 
@@ -136,10 +147,43 @@ public class SubscriptionServiceImpl implements SubscriptionService {
         Subscription updatedSubscription = subscriptionRepository.save(subscription);
         log.info("Subscription plan updated: {}", subscriptionId);
 
+        SubscriptionResponse response = entityMapper.map(updatedSubscription, SubscriptionResponse.class);
+
         if (newPlan == PlanType.PREMIUM) {
+            subscription.setStatus(StatusType.PENDING);
+            subscription.setNextBillingDate(null);
+            subscriptionRepository.save(subscription);
+
             premiumSubscriptionProducer.sendPremiumSubscriptionRequest(updatedSubscription, userId);
+            response.setStatus(StatusType.PENDING);
+            response.setMessage("Plan updated to PREMIUM. Please complete payment to activate.");
         }
 
-        return entityMapper.map(updatedSubscription, SubscriptionResponse.class);
+        return response;
+    }
+
+    @Transactional
+    public void activatePremiumSubscription(UUID subscriptionId) {
+        Subscription subscription = subscriptionRepository.findById(subscriptionId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Subscription not found"));
+
+        subscription.setStatus(StatusType.ACTIVE);
+        subscription.setNextBillingDate(LocalDateTime.now().plusMonths(1));
+        subscription.setUpdatedAt(LocalDateTime.now());
+        subscriptionRepository.save(subscription);
+
+        log.info("Subscription {} activated successfully", subscriptionId);
+    }
+
+    @Transactional
+    public void failPremiumSubscription(UUID subscriptionId) {
+        Subscription subscription = subscriptionRepository.findById(subscriptionId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Subscription not found"));
+
+        subscription.setStatus(StatusType.FAILED);
+        subscription.setUpdatedAt(LocalDateTime.now());
+        subscriptionRepository.save(subscription);
+
+        log.info("Subscription {} marked as FAILED", subscriptionId);
     }
 }

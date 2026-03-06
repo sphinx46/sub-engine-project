@@ -102,10 +102,8 @@ logging:
   level:
     mordvinov_dev.billing_service: DEBUG
     org.springframework.web: INFO
-    org.springframework.security: DEBUG
-    org.springframework.security.oauth2: DEBUG
-    org.springframework.security.oauth2.jwt: DEBUG
-    org.flywaydb: DEBUG
+    org.springframework.security: INFO
+    org.flywaydb: INFO
 
 youkassa:
   shop-id: ${YOOKASSA_SHOP_ID}

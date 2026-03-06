@@ -31,13 +31,11 @@ import ru.loolzaaa.youkassa.processors.PaymentProcessor;
 import ru.loolzaaa.youkassa.processors.RefundProcessor;
 
 import java.math.BigDecimal;
-import java.time.Instant;
 import java.time.LocalDateTime;
-import java.time.ZoneOffset;
 import java.util.UUID;
 
-@Service
 @Slf4j
+@Service
 @RequiredArgsConstructor
 public class PaymentServiceImpl implements PaymentService {
 

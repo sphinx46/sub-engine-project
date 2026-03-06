@@ -27,11 +27,14 @@ public class SubscriptionResponse {
     @Schema(description = "Тип плана", example = "PREMIUM")
     private PlanType planType;
 
-    @Schema(description = "Статус подписки", example = "ACTIVE")
+    @Schema(description = "Статус подписки", example = "PENDING")
     private StatusType status;
 
     @Schema(description = "Дата следующего списания", example = "2026-04-02T10:30:00")
     private LocalDateTime nextBillingDate;
+
+    @Schema(description = "Сообщение для пользователя", example = "Subscription created. Please complete payment to activate.")
+    private String message;
 
     @Schema(description = "Дата создания", example = "2026-03-02T10:30:00")
     private LocalDateTime createdAt;

@@ -58,6 +58,25 @@ public class PremiumSubscriptionProducer {
         sendResponse(event, userId.toString() + "_" + event.getEventId());
     }
 
+    public void sendPaymentSuccessResponse(UUID subscriptionId, UUID userId, String paymentId) {
+        log.info("Sending payment success response, subscriptionId={}, userId={}, paymentId={}",
+                subscriptionId, userId, paymentId);
+
+        PremiumSubscriptionResponseEvent event = PremiumSubscriptionResponseEvent.builder()
+                .eventId(UUID.randomUUID())
+                .eventType("PREMIUM_SUBSCRIPTION_RESPONSE")
+                .timestamp(LocalDateTime.now())
+                .subscriptionId(subscriptionId)
+                .userId(userId)
+                .paymentId(paymentId)
+                .confirmationUrl(null)
+                .status("SUCCESS")
+                .message("Payment completed successfully")
+                .build();
+
+        sendResponse(event, userId.toString() + "_" + event.getEventId());
+    }
+
     private void sendResponse(PremiumSubscriptionResponseEvent event, String key) {
         try {
             CompletableFuture<SendResult<String, PremiumSubscriptionResponseEvent>> future =
