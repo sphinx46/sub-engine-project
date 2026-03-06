@@ -88,8 +88,11 @@ public class PaymentServiceImpl implements PaymentService {
 
             paymentRepository.save(entity);
 
+            PaymentResponse response = entityMapper.map(entity, PaymentResponse.class);
+            response.setConfirmationUrl(createdPayment.getConfirmation().getConfirmationUrl());
+
             log.info("Payment created successfully: {} for user: {}", createdPayment.getId(), userId);
-            return entityMapper.map(entity, PaymentResponse.class);
+            return response;
 
         } catch (Exception e) {
             log.error("Failed to create payment for user: {}", userId, e);

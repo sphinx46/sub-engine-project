@@ -29,7 +29,7 @@ public class PaymentResponse {
     @Schema(description = "ID подписки", example = "123e4567-e89b-12d3-a456-426614174000")
     private UUID subscriptionId;
 
-    @Schema(description = "Статус платежа", example = "succeeded")
+    @Schema(description = "Статус платежа", example = "pending")
     private String status;
 
     @Schema(description = "Сумма платежа", example = "1000.00")
@@ -46,6 +46,9 @@ public class PaymentResponse {
 
     @Schema(description = "Тип способа оплаты", example = "bank_card")
     private String paymentMethodType;
+
+    @Schema(description = "URL для подтверждения платежа", example = "https://yoomoney.ru/api-pages/v2/payment-confirm/epl?orderId=22e12f66-000f-5000-8000-18db351245c7")
+    private String confirmationUrl;
 
     @Schema(description = "Дата создания", example = "2026-03-02T10:30:00Z")
     private Instant createdAt;
