@@ -459,6 +459,25 @@ services:
     networks:
       - sub-engine-network
 
+  maildev:
+    image: maildev/maildev:latest
+    container_name: maildev
+    ports:
+      - "1080:1080"
+      - "1025:1025"
+    environment:
+      - MAILDEV_SMTP_PORT=1025
+      - MAILDEV_WEB_PORT=1080
+      - MAILDEV_INCOMING_USER=
+      - MAILDEV_INCOMING_PASS=
+    healthcheck:
+      test: [ "CMD", "wget", "--spider", "-q", "http://localhost:1080/" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - sub-engine-network
+
   billing-postgres-exporter:
     image: prometheuscommunity/postgres-exporter:latest
     container_name: billing-postgres-exporter
