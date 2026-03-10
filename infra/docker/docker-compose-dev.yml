@@ -315,7 +315,7 @@ services:
       - "${BILLING_DB_PORT}:5432"
     volumes:
       - billing_postgres_data:/var/lib/postgresql/data
-      - ./databases/billing:/docker-entrypoint-initdb.d:ro
+      - ../../infra/databases/billing:/docker-entrypoint-initdb.d:ro
     healthcheck:
       test: [ "CMD-SHELL", "pg_isready -U ${BILLING_DB_USERNAME} -d ${BILLING_DB_NAME}" ]
       interval: 10s
