@@ -1,4 +1,4 @@
-package mordvinov_dev.worker_service.document;
+package mordvinov_dev.worker_service.domain.document;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -14,19 +14,20 @@ import java.util.UUID;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-@Document(collection = "notifications")
-public class Notification {
+@Document(collection = "audit_logs")
+public class AuditLog {
     @Id
     private String id;
     @Indexed
-    private UUID userId;
+    private UUID eventId;
     @Indexed
-    private String type;
-    private String channel;
-    private String recipient;
-    private String subject;
-    private String content;
-    private Boolean sent;
-    private LocalDateTime sentAt;
-    private LocalDateTime createdAt;
+    private String eventType;
+    @Indexed
+    private UUID userId;
+    private String paymentId;
+    private UUID subscriptionId;
+    private String action;
+    private String status;
+    private String details;
+    private LocalDateTime timestamp;
 }

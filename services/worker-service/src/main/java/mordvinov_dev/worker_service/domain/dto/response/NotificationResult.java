@@ -1,25 +1,29 @@
 package mordvinov_dev.worker_service.domain.dto.response;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+import lombok.AllArgsConstructor;
 import lombok.Builder;
-import lombok.Value;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
 
-@Value
+@Data
 @Builder
+@NoArgsConstructor
+@AllArgsConstructor
 @Schema(description = "Результат отправки уведомления")
 public class NotificationResult {
 
     @Schema(description = "ID уведомления", example = "123e4567-e89b-12d3-a456-426614174000")
-    String notificationId;
+    private String notificationId;
 
     @Schema(description = "Успешность отправки", example = "true")
-    boolean success;
+    private boolean success;
 
     @Schema(description = "Сообщение о результате", example = "Email sent successfully")
-    String message;
+    private String message;
 
     @Schema(description = "Время отправки")
-    LocalDateTime timestamp;
+    private LocalDateTime timestamp;
 }

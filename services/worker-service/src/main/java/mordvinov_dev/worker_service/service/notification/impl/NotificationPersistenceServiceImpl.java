@@ -2,9 +2,11 @@ package mordvinov_dev.worker_service.service.notification.impl;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import mordvinov_dev.worker_service.document.Notification;
-import mordvinov_dev.worker_service.event.PaymentEvent;
+import mordvinov_dev.worker_service.domain.document.Notification;
+import mordvinov_dev.worker_service.domain.dto.response.NotificationResult;
 import mordvinov_dev.worker_service.domain.NotificationType;
+import mordvinov_dev.worker_service.event.PaymentEvent;
+import mordvinov_dev.worker_service.mapping.EntityMapper;
 import mordvinov_dev.worker_service.repository.NotificationRepository;
 import mordvinov_dev.worker_service.service.notification.NotificationPersistenceService;
 import org.springframework.beans.factory.annotation.Value;
@@ -18,6 +20,7 @@ import java.time.LocalDateTime;
 public class NotificationPersistenceServiceImpl implements NotificationPersistenceService {
 
     private final NotificationRepository notificationRepository;
+    private final EntityMapper entityMapper;
 
     @Value("${notification.email.recipient:user@example.com}")
     private String defaultEmailRecipient;
@@ -46,14 +49,32 @@ public class NotificationPersistenceServiceImpl implements NotificationPersisten
     }
 
     @Override
-    public Notification markAsSent(Notification notification, String resultId) {
+    public NotificationResult markAsSent(Notification notification) {
         notification.setSent(true);
         notification.setSentAt(LocalDateTime.now());
 
         Notification updated = notificationRepository.save(notification);
-        log.debug("Notification marked as sent: id={}, resultId={}", updated.getId(), resultId);
+        log.debug("Notification marked as sent: id={}", updated.getId());
 
-        return updated;
+        return entityMapper.map(updated, NotificationResult.class);
+    }
+
+    @Override
+    public NotificationResult markAsFailed(Notification notification, String errorMessage) {
+        notification.setSent(false);
+        notification.setSentAt(LocalDateTime.now());
+
+        Notification updated = notificationRepository.save(notification);
+        log.debug("Notification marked as failed: id={}, error={}", updated.getId(), errorMessage);
+
+        NotificationResult result = entityMapper.map(updated, NotificationResult.class);
+
+        return NotificationResult.builder()
+                .notificationId(result.getNotificationId())
+                .success(false)
+                .message("Failed to send notification: " + errorMessage)
+                .timestamp(result.getTimestamp())
+                .build();
     }
 
     private String getSubjectForStatus(String status) {

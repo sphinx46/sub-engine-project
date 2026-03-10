@@ -2,14 +2,14 @@ package mordvinov_dev.worker_service.service.notification.impl;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import mordvinov_dev.worker_service.document.Notification;
-import mordvinov_dev.worker_service.event.PaymentEvent;
-import mordvinov_dev.worker_service.domain.NotificationType;
+import mordvinov_dev.worker_service.domain.document.Notification;
 import mordvinov_dev.worker_service.domain.dto.request.NotificationRequest;
 import mordvinov_dev.worker_service.domain.dto.response.NotificationResult;
-import mordvinov_dev.worker_service.service.notification.NotificationSenderService;
+import mordvinov_dev.worker_service.domain.NotificationType;
+import mordvinov_dev.worker_service.event.PaymentEvent;
 import mordvinov_dev.worker_service.service.notification.EmailNotificationService;
 import mordvinov_dev.worker_service.service.notification.NotificationPersistenceService;
+import mordvinov_dev.worker_service.service.notification.NotificationSenderService;
 import org.springframework.stereotype.Service;
 
 import java.util.HashMap;
@@ -47,18 +47,24 @@ public class EmailNotificationServiceImpl implements EmailNotificationService {
                 .templateData(templateData)
                 .build();
 
-        NotificationResult result = notificationSenderService.send(request);
+        try {
+            NotificationResult sendResult = notificationSenderService.send(request);
 
-        if (result.isSuccess()) {
-            notificationPersistenceService.markAsSent(notification, result.getNotificationId());
-            log.info("Email notification sent successfully: eventId={}, resultId={}",
-                    event.getEventId(), result.getNotificationId());
-        } else {
-            log.error("Failed to send email notification: eventId={}, error={}",
-                    event.getEventId(), result.getMessage());
+            if (sendResult.isSuccess()) {
+                NotificationResult result = notificationPersistenceService.markAsSent(notification);
+                log.info("Email notification sent successfully: eventId={}, resultId={}",
+                        event.getEventId(), result.getNotificationId());
+                return result;
+            } else {
+                log.error("Failed to send email notification: eventId={}, error={}",
+                        event.getEventId(), sendResult.getMessage());
+                return notificationPersistenceService.markAsFailed(notification, sendResult.getMessage());
+            }
+        } catch (Exception e) {
+            log.error("Error sending email notification: eventId={}, error={}",
+                    event.getEventId(), e.getMessage(), e);
+            return notificationPersistenceService.markAsFailed(notification, e.getMessage());
         }
-
-        return result;
     }
 
     private String getTemplateNameForStatus(String status) {

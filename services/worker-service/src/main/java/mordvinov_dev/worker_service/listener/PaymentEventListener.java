@@ -2,8 +2,9 @@ package mordvinov_dev.worker_service.listener;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import mordvinov_dev.worker_service.document.AuditLog;
-import mordvinov_dev.worker_service.document.Notification;
+import mordvinov_dev.worker_service.domain.document.AuditLog;
+import mordvinov_dev.worker_service.domain.document.Notification;
+import mordvinov_dev.worker_service.domain.dto.response.NotificationResult;
 import mordvinov_dev.worker_service.event.PaymentEvent;
 import mordvinov_dev.worker_service.service.audit.AuditLogService;
 import mordvinov_dev.worker_service.service.notification.EmailNotificationService;
@@ -42,10 +43,10 @@ public class PaymentEventListener {
 
             Notification notification = notificationPersistenceService.createNotification(event);
 
-            emailNotificationService.sendEmailNotification(event, notification);
+            NotificationResult result = emailNotificationService.sendEmailNotification(event, notification);
 
-            log.info("Successfully processed payment event: eventId={}, auditLogId={}, notificationId={}",
-                    event.getEventId(), auditLog.getId(), notification.getId());
+            log.info("Successfully processed payment event: eventId={}, auditLogId={}, notificationId={}, result={}",
+                    event.getEventId(), auditLog.getId(), notification.getId(), result.isSuccess());
 
         } catch (Exception e) {
             log.error("Failed to process payment event: eventId={}, error={}",

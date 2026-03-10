@@ -2,7 +2,7 @@ package mordvinov_dev.worker_service.service.audit.impl;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import mordvinov_dev.worker_service.document.AuditLog;
+import mordvinov_dev.worker_service.domain.document.AuditLog;
 import mordvinov_dev.worker_service.event.PaymentEvent;
 import mordvinov_dev.worker_service.repository.AuditLogRepository;
 import mordvinov_dev.worker_service.service.audit.AuditLogService;
