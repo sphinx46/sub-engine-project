@@ -23,4 +23,5 @@ public class PremiumSubscriptionRequestEvent {
     private BigDecimal amount;
     private String currency;
     private String description;
+    private String userEmail;
 }

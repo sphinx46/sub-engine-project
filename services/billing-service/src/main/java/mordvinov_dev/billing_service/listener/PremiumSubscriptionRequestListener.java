@@ -34,6 +34,11 @@ public class PremiumSubscriptionRequestListener {
             metadata.put("subscriptionId", event.getSubscriptionId().toString());
             metadata.put("eventId", event.getEventId().toString());
 
+            if (event.getUserEmail() != null && !event.getUserEmail().isEmpty()) {
+                metadata.put("userEmail", event.getUserEmail());
+                log.debug("Added user email to metadata: {} for subscription: {}", event.getUserEmail(), event.getSubscriptionId());
+            }
+
             CreatePaymentRequest paymentRequest = CreatePaymentRequest.builder()
                     .amount(event.getAmount())
                     .currency(event.getCurrency())

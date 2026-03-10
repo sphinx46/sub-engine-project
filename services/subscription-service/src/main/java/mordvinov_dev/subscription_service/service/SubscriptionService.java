@@ -11,7 +11,7 @@ import java.util.UUID;
 
 public interface SubscriptionService {
 
-    SubscriptionResponse createSubscription(CreateSubscriptionRequest request, UUID userId);
+    SubscriptionResponse createSubscription(CreateSubscriptionRequest request, UUID userId, String userEmail);
 
     PageResponse<SubscriptionResponse> getUserSubscriptions(UUID userId, PageRequest pageRequest);
 
@@ -21,5 +21,5 @@ public interface SubscriptionService {
 
     long getUserActiveSubscriptionsCount(UUID userId);
 
-    SubscriptionResponse updateSubscriptionPlan(UUID subscriptionId, UUID userId, PlanType newPlan);
+    SubscriptionResponse updateSubscriptionPlan(UUID subscriptionId, UUID userId, PlanType newPlan, String userEmail);
 }

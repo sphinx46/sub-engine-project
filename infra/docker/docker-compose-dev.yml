@@ -350,6 +350,8 @@ services:
         condition: service_started
       kafka:
         condition: service_started
+      maildev:
+        condition: service_healthy
     healthcheck:
       test: [ "CMD", "curl", "-f", "http://localhost:8080/actuator/health" ]
       interval: 30s

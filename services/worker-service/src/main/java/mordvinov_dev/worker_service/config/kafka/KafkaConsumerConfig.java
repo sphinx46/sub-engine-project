@@ -44,9 +44,8 @@ public class KafkaConsumerConfig {
         config.put(ErrorHandlingDeserializer.KEY_DESERIALIZER_CLASS, StringDeserializer.class);
         config.put(ErrorHandlingDeserializer.VALUE_DESERIALIZER_CLASS, JsonDeserializer.class.getName());
 
-        config.put(JsonDeserializer.TRUSTED_PACKAGES, "mordvinov_dev.worker_service.event");
-        config.put(JsonDeserializer.TYPE_MAPPINGS,
-                "paymentEvent:mordvinov_dev.worker_service.event.PaymentEvent");
+        config.put(JsonDeserializer.TRUSTED_PACKAGES, "*");
+        config.put(JsonDeserializer.TYPE_MAPPINGS, "paymentEvent:mordvinov_dev.worker_service.event.PaymentEvent");
         config.put(JsonDeserializer.USE_TYPE_INFO_HEADERS, false);
         config.put(JsonDeserializer.VALUE_DEFAULT_TYPE, PaymentEvent.class.getName());
 

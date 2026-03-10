@@ -13,14 +13,16 @@ import java.util.UUID;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class PremiumSubscriptionRequestEvent {
+public class PaymentEvent {
     private UUID eventId;
-    private String eventType = "PREMIUM_SUBSCRIPTION_REQUEST";
+    private String eventType;
     private LocalDateTime timestamp;
-    private UUID subscriptionId;
+    private String paymentId;
     private UUID userId;
+    private UUID subscriptionId;
     private BigDecimal amount;
     private String currency;
+    private String status;
     private String description;
     private String userEmail;
 }

@@ -4,16 +4,17 @@ import com.fasterxml.jackson.databind.JsonNode;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import mordvinov_dev.billing_service.entity.PaymentEntity;
-import mordvinov_dev.billing_service.entity.RefundEntity;
+import mordvinov_dev.billing_service.event.PaymentEvent;
+import mordvinov_dev.billing_service.exception.PaymentNotFoundException;
+import mordvinov_dev.billing_service.producer.PaymentEventProducer;
 import mordvinov_dev.billing_service.producer.PremiumSubscriptionProducer;
 import mordvinov_dev.billing_service.repository.PaymentRepository;
-import mordvinov_dev.billing_service.repository.RefundRepository;
 import mordvinov_dev.billing_service.service.WebhookService;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
-import java.util.Optional;
+import java.util.UUID;
 
 @Slf4j
 @Service
@@ -21,94 +22,90 @@ import java.util.Optional;
 public class WebhookServiceImpl implements WebhookService {
 
     private final PaymentRepository paymentRepository;
-    private final RefundRepository refundRepository;
+    private final PaymentEventProducer paymentEventProducer;
     private final PremiumSubscriptionProducer premiumSubscriptionProducer;
 
     @Override
     @Transactional
     public void processWebhook(JsonNode payload) {
-        String event = payload.has("event") ? payload.get("event").asText() : null;
+        String eventType = payload.has("event") ? payload.get("event").asText() : "unknown";
+        String paymentId = payload.has("object") ? payload.get("object").get("id").asText() : null;
 
-        if (event == null) {
-            log.warn("Received webhook without event type");
+        log.info("Processing webhook event: {}, paymentId: {}", eventType, paymentId);
+
+        if (paymentId == null) {
+            log.error("Payment ID not found in webhook payload");
             return;
         }
 
-        log.info("Processing webhook event: {}", event);
+        PaymentEntity payment = paymentRepository.findByPaymentId(paymentId)
+                .orElseThrow(() -> new PaymentNotFoundException(paymentId));
 
-        if (event.startsWith("payment.")) {
-            processPaymentWebhook(payload, event);
-        } else if (event.startsWith("refund.")) {
-            processRefundWebhook(payload, event);
-        } else {
-            log.warn("Unhandled webhook event type: {}", event);
-        }
-    }
-
-    private void processPaymentWebhook(JsonNode payload, String event) {
-        JsonNode object = payload.get("object");
-        if (object == null || !object.has("id")) {
-            log.warn("Payment webhook missing object or id");
-            return;
-        }
-
-        String paymentId = object.get("id").asText();
-        String newStatus = object.has("status") ? object.get("status").asText() : null;
-
-        Optional<PaymentEntity> paymentOpt = paymentRepository.findByPaymentId(paymentId);
-
-        if (paymentOpt.isEmpty()) {
-            log.warn("Payment not found for webhook: {}", paymentId);
-            return;
-        }
-
-        PaymentEntity payment = paymentOpt.get();
         String oldStatus = payment.getStatus();
+        String newStatus = mapYooKassaStatus(eventType);
 
         if (newStatus != null && !newStatus.equals(oldStatus)) {
             payment.setStatus(newStatus);
             payment.setUpdatedAt(LocalDateTime.now());
-            paymentRepository.save(payment);
 
-            log.info("Updated payment {} status from {} to {}", paymentId, oldStatus, newStatus);
-
-            if ("succeeded".equals(newStatus) && payment.getSubscriptionId() != null) {
+            if ("succeeded".equalsIgnoreCase(newStatus) && payment.getSubscriptionId() != null) {
+                log.info("Payment succeeded for subscription: {}, sending premium subscription response", payment.getSubscriptionId());
                 premiumSubscriptionProducer.sendPaymentSuccessResponse(
                         payment.getSubscriptionId(),
                         payment.getUserId(),
-                        paymentId
+                        payment.getPaymentId()
                 );
-                log.info("Payment success notification sent for subscription {}", payment.getSubscriptionId());
             }
+
+            log.info("Payment status updated from {} to {} for paymentId: {}", oldStatus, newStatus, paymentId);
         }
+
+        String userEmail = extractUserEmail(payload, payment);
+
+        PaymentEvent event = PaymentEvent.builder()
+                .eventId(UUID.randomUUID())
+                .eventType("PAYMENT_" + eventType.toUpperCase().replace(".", "_"))
+                .timestamp(LocalDateTime.now())
+                .paymentId(payment.getPaymentId())
+                .userId(payment.getUserId())
+                .subscriptionId(payment.getSubscriptionId())
+                .amount(payment.getAmount())
+                .currency(payment.getCurrency())
+                .status(payment.getStatus())
+                .description(payment.getDescription())
+                .userEmail(userEmail)
+                .build();
+
+        log.info("Sending payment event to Kafka for paymentId: {}, status: {}, userEmail: {}",
+                paymentId, event.getStatus(), userEmail);
+        paymentEventProducer.sendPaymentEvent(event);
     }
 
-    private void processRefundWebhook(JsonNode payload, String event) {
-        JsonNode object = payload.get("object");
-        if (object == null || !object.has("id")) {
-            log.warn("Refund webhook missing object or id");
-            return;
+    private String extractUserEmail(JsonNode payload, PaymentEntity payment) {
+        if (payment.getUserEmail() != null && !payment.getUserEmail().isEmpty()) {
+            return payment.getUserEmail();
         }
 
-        String refundId = object.get("id").asText();
-        String newStatus = object.has("status") ? object.get("status").asText() : null;
-
-        Optional<RefundEntity> refundOpt = refundRepository.findByRefundId(refundId);
-
-        if (refundOpt.isEmpty()) {
-            log.warn("Refund not found for webhook: {}", refundId);
-            return;
+        try {
+            if (payload.has("object") && payload.get("object").has("metadata")) {
+                JsonNode metadata = payload.get("object").get("metadata");
+                if (metadata.has("userEmail")) {
+                    return metadata.get("userEmail").asText();
+                }
+            }
+        } catch (Exception e) {
+            log.warn("Failed to extract email from metadata: {}", e.getMessage());
         }
 
-        RefundEntity refund = refundOpt.get();
-        String oldStatus = refund.getStatus();
+        return null;
+    }
 
-        if (newStatus != null && !newStatus.equals(oldStatus)) {
-            refund.setStatus(newStatus);
-            refund.setUpdatedAt(LocalDateTime.now());
-            refundRepository.save(refund);
-
-            log.info("Updated refund {} status from {} to {}", refundId, oldStatus, newStatus);
-        }
+    private String mapYooKassaStatus(String yooKassaEvent) {
+        return switch (yooKassaEvent) {
+            case "payment.succeeded" -> "succeeded";
+            case "payment.canceled" -> "canceled";
+            case "payment.waiting_for_capture" -> "waiting_for_capture";
+            default -> null;
+        };
     }
 }

@@ -26,7 +26,8 @@ public class PaymentEventProcessorImpl implements PaymentEventProcessor {
 
     @Override
     public void process(PaymentEvent event) {
-        log.info("Processing event: eventId={}, status={}", event.getEventId(), event.getStatus());
+        log.info("Processing event: eventId={}, status={}, userId={}, email={}",
+                event.getEventId(), event.getStatus(), event.getUserId(), event.getUserEmail());
 
         if (auditService.existsByEventId(event.getEventId().toString())) {
             log.warn("Duplicate event: {}", event.getEventId());
@@ -42,10 +43,11 @@ public class PaymentEventProcessorImpl implements PaymentEventProcessor {
 
         if (response.isSuccess()) {
             notificationService.markAsSent(notification);
-            log.info("Event processed successfully: {}", event.getEventId());
+            log.info("Event processed successfully: {}, email sent to: {}",
+                    event.getEventId(), notification.getRecipient());
         } else {
             notificationService.markAsFailed(notification, response.getMessage());
-            log.error("Event processing failed: {}", event.getEventId());
+            log.error("Event processing failed: {}, error: {}", event.getEventId(), response.getMessage());
         }
     }
 
@@ -56,6 +58,15 @@ public class PaymentEventProcessorImpl implements PaymentEventProcessor {
         templateData.put("currency", event.getCurrency());
         templateData.put("status", event.getStatus());
         templateData.put("description", event.getDescription());
+        templateData.put("userId", event.getUserId().toString());
+
+        if (event.getSubscriptionId() != null) {
+            templateData.put("subscriptionId", event.getSubscriptionId().toString());
+        }
+
+        if (event.getUserEmail() != null) {
+            templateData.put("userEmail", event.getUserEmail());
+        }
 
         if ("failed".equalsIgnoreCase(event.getStatus())) {
             templateData.put("reason", "Payment processing failed");

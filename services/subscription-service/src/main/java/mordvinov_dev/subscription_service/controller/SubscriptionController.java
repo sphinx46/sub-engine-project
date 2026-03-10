@@ -24,10 +24,13 @@ public class SubscriptionController {
     private final SubscriptionService subscriptionService;
 
     @PostMapping
-    public ResponseEntity<SubscriptionResponse> createSubscription(@RequestBody CreateSubscriptionRequest request,
-                                                                   @RequestHeader("X-User-Id") UUID userId) {
+    public ResponseEntity<SubscriptionResponse> createSubscription(
+            @RequestBody CreateSubscriptionRequest request,
+            @RequestHeader("X-User-Id") UUID userId,
+            @RequestHeader(value = "X-User-Email", required = false) String userEmail) {
+
         log.info("Received create subscription request for user: {}, planType: {}", userId, request.getPlanType());
-        SubscriptionResponse response = subscriptionService.createSubscription(request, userId);
+        SubscriptionResponse response = subscriptionService.createSubscription(request, userId, userEmail);
         log.info("Subscription created successfully for user: {}, subscriptionId: {}, hasConfirmationUrl: {}",
                 userId, response.getId(), response.getConfirmationUrl() != null);
         return ResponseEntity.ok(response);
@@ -93,11 +96,14 @@ public class SubscriptionController {
     }
 
     @PatchMapping("/{subscriptionId}/plan")
-    public ResponseEntity<SubscriptionResponse> updateSubscriptionPlan(@PathVariable UUID subscriptionId,
-                                                                       @RequestHeader("X-User-Id") UUID userId,
-                                                                       @RequestParam PlanType newPlan) {
+    public ResponseEntity<SubscriptionResponse> updateSubscriptionPlan(
+            @PathVariable UUID subscriptionId,
+            @RequestHeader("X-User-Id") UUID userId,
+            @RequestHeader(value = "X-User-Email", required = false) String userEmail,
+            @RequestParam PlanType newPlan) {
+
         log.info("Received plan update request for subscription: {}, user: {}, newPlan: {}", subscriptionId, userId, newPlan);
-        SubscriptionResponse response = subscriptionService.updateSubscriptionPlan(subscriptionId, userId, newPlan);
+        SubscriptionResponse response = subscriptionService.updateSubscriptionPlan(subscriptionId, userId, newPlan, userEmail);
         log.info("Plan updated successfully for subscription: {}, user: {}, newPlan: {}", subscriptionId, userId, newPlan);
         return ResponseEntity.ok(response);
     }

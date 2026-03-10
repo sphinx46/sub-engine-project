@@ -10,6 +10,7 @@ public class KafkaTopicConfig {
 
     private static final String PREMIUM_SUBSCRIPTION_REQUEST_TOPIC = "premium-subscription-request";
     private static final String PREMIUM_SUBSCRIPTION_RESPONSE_TOPIC = "premium-subscription-response";
+    private static final String PAYMENT_EVENTS_TOPIC = "payment.events";
     private static final int PARTITIONS = 3;
     private static final int REPLICAS = 1;
 
@@ -24,6 +25,14 @@ public class KafkaTopicConfig {
     @Bean
     public NewTopic premiumSubscriptionResponseTopic() {
         return TopicBuilder.name(PREMIUM_SUBSCRIPTION_RESPONSE_TOPIC)
+                .partitions(PARTITIONS)
+                .replicas(REPLICAS)
+                .build();
+    }
+
+    @Bean
+    public NewTopic paymentEventsTopic() {
+        return TopicBuilder.name(PAYMENT_EVENTS_TOPIC)
                 .partitions(PARTITIONS)
                 .replicas(REPLICAS)
                 .build();

@@ -23,4 +23,5 @@ public class PaymentEvent {
     private String currency;
     private String status;
     private String description;
+    private String userEmail;
 }

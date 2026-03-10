@@ -7,7 +7,6 @@ import org.springframework.cloud.gateway.filter.GatewayFilterChain;
 import org.springframework.cloud.gateway.filter.GlobalFilter;
 import org.springframework.core.Ordered;
 import org.springframework.core.annotation.Order;
-import org.springframework.http.HttpHeaders;
 import org.springframework.http.server.reactive.ServerHttpRequest;
 import org.springframework.security.core.context.ReactiveSecurityContextHolder;
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken;
@@ -19,10 +18,12 @@ import reactor.core.publisher.Mono;
 @Component
 @Order(Ordered.HIGHEST_PRECEDENCE + 1)
 @RequiredArgsConstructor
-public class UserIdExtractorFilter implements GlobalFilter, Ordered {
+public class ExtractorFilter implements GlobalFilter, Ordered {
 
     private static final String USER_ID_HEADER = "X-User-Id";
+    private static final String USER_EMAIL_HEADER = "X-User-Email";
     private static final String USER_ID_CLAIM = "sub";
+    private static final String USER_EMAIL_CLAIM = "email";
 
     @PostConstruct
     public void init() {
@@ -42,14 +43,20 @@ public class UserIdExtractorFilter implements GlobalFilter, Ordered {
                 .map(JwtAuthenticationToken::getToken)
                 .flatMap(jwt -> {
                     String userId = jwt.getClaimAsString(USER_ID_CLAIM);
+                    String userEmail = jwt.getClaimAsString(USER_EMAIL_CLAIM);
 
                     if (userId != null) {
-                        log.debug("Extracted userId: {} for path: {}", userId, request.getURI().getPath());
+                        log.debug("Extracted userId: {}, email: {} for path: {}", userId, userEmail, request.getURI().getPath());
 
-                        ServerHttpRequest mutatedRequest = request.mutate()
-                                .header(USER_ID_HEADER, userId)
-                                .build();
+                        ServerHttpRequest.Builder requestBuilder = request.mutate()
+                                .header(USER_ID_HEADER, userId);
 
+                        if (userEmail != null && !userEmail.isEmpty()) {
+                            requestBuilder.header(USER_EMAIL_HEADER, userEmail);
+                            log.debug("Added email header: {} for user: {}", userEmail, userId);
+                        }
+
+                        ServerHttpRequest mutatedRequest = requestBuilder.build();
                         return chain.filter(exchange.mutate().request(mutatedRequest).build());
                     }
 

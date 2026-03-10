@@ -4,6 +4,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import mordvinov_dev.subscription_service.entity.Subscription;
 import mordvinov_dev.subscription_service.event.PremiumSubscriptionRequestEvent;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.kafka.support.SendResult;
 import org.springframework.stereotype.Component;
@@ -19,10 +20,13 @@ import java.util.concurrent.CompletableFuture;
 public class PremiumSubscriptionProducer {
 
     private final KafkaTemplate<String, PremiumSubscriptionRequestEvent> premiumSubscriptionRequestKafkaTemplate;
-    private static final String REQUEST_TOPIC = "premium-subscription-request";
 
-    public void sendPremiumSubscriptionRequest(Subscription subscription, UUID userId) {
-        log.info("Sending premium subscription request, subscriptionId={}, userId={}", subscription.getId(), userId);
+    @Value("${kafka.topics.premium-subscription-request:premium-subscription-request}")
+    private String requestTopic;
+
+    public void sendPremiumSubscriptionRequest(Subscription subscription, UUID userId, String userEmail) {
+        log.info("Sending premium subscription request for subscription: {}, user: {}",
+                subscription.getId(), userId);
 
         PremiumSubscriptionRequestEvent event = PremiumSubscriptionRequestEvent.builder()
                 .eventId(UUID.randomUUID())
@@ -33,21 +37,24 @@ public class PremiumSubscriptionProducer {
                 .amount(new BigDecimal("1000.00"))
                 .currency("RUB")
                 .description("Premium subscription payment")
+                .userEmail(userEmail)
                 .build();
 
-        String key = userId.toString() + "_" + event.getEventId();
+        sendRequest(event, userId.toString() + "_" + event.getEventId());
+    }
 
+    private void sendRequest(PremiumSubscriptionRequestEvent event, String key) {
         try {
             CompletableFuture<SendResult<String, PremiumSubscriptionRequestEvent>> future =
-                    premiumSubscriptionRequestKafkaTemplate.send(REQUEST_TOPIC, key, event);
+                    premiumSubscriptionRequestKafkaTemplate.send(requestTopic, key, event);
 
             future.whenComplete((result, exception) -> {
                 if (exception != null) {
                     log.error("Failed to send premium subscription request, subscriptionId={}, userId={}, error={}",
-                            subscription.getId(), userId, exception.getMessage());
+                            event.getSubscriptionId(), event.getUserId(), exception.getMessage());
                 } else {
                     log.info("Premium subscription request sent successfully, subscriptionId={}, userId={}, partition={}, offset={}",
-                            subscription.getId(), userId,
+                            event.getSubscriptionId(), event.getUserId(),
                             result.getRecordMetadata().partition(),
                             result.getRecordMetadata().offset());
                 }
@@ -55,7 +62,7 @@ public class PremiumSubscriptionProducer {
 
         } catch (Exception e) {
             log.error("Critical error sending premium subscription request, subscriptionId={}, userId={}",
-                    subscription.getId(), userId, e);
+                    event.getSubscriptionId(), event.getUserId(), e);
             throw new RuntimeException("Failed to send premium subscription request", e);
         }
     }

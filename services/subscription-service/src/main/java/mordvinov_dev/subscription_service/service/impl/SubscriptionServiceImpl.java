@@ -40,7 +40,7 @@ public class SubscriptionServiceImpl implements SubscriptionService {
 
     @Override
     @Transactional
-    public SubscriptionResponse createSubscription(CreateSubscriptionRequest request, UUID userId) {
+    public SubscriptionResponse createSubscription(CreateSubscriptionRequest request, UUID userId, String userEmail) {
         log.info("Creating subscription for user: {}, planType: {}", userId, request.getPlanType());
 
         Subscription subscription = entityMapper.map(request, Subscription.class);
@@ -72,9 +72,56 @@ public class SubscriptionServiceImpl implements SubscriptionService {
                 log.error("Failed to create payment for subscription: {}, user: {}, error: {}",
                         savedSubscription.getId(), userId, e.getMessage(), e);
                 log.info("Sending async premium subscription request as fallback for subscription: {}", savedSubscription.getId());
-                premiumSubscriptionProducer.sendPremiumSubscriptionRequest(savedSubscription, userId);
+                premiumSubscriptionProducer.sendPremiumSubscriptionRequest(savedSubscription, userId, userEmail);
                 response.setMessage("Subscription created but payment initiation failed. You will receive payment link shortly.");
             }
+        }
+
+        return response;
+    }
+
+    @Override
+    @Transactional
+    public SubscriptionResponse updateSubscriptionPlan(UUID subscriptionId, UUID userId, PlanType newPlan, String userEmail) {
+        log.info("Updating subscription plan: {} for user: {} to: {}", subscriptionId, userId, newPlan);
+
+        Subscription subscription = ownershipValidator.validateAndGetSubscription(subscriptionId, userId);
+
+        if (subscription.getStatus() != StatusType.ACTIVE) {
+            log.warn("Invalid status for plan update: subscription={}, currentStatus={}, requiredStatus={}, user={}",
+                    subscriptionId, subscription.getStatus(), StatusType.ACTIVE, userId);
+            throw new InvalidSubscriptionStatusException(subscriptionId, subscription.getStatus(), StatusType.ACTIVE);
+        }
+
+        subscription.setPlanType(newPlan);
+        subscription.setUpdatedAt(LocalDateTime.now());
+
+        Subscription updatedSubscription = subscriptionRepository.save(subscription);
+        log.info("Subscription plan updated: {}, user: {}, newPlan: {}", subscriptionId, userId, newPlan);
+
+        SubscriptionResponse response = entityMapper.map(updatedSubscription, SubscriptionResponse.class);
+
+        if (newPlan == PlanType.PREMIUM) {
+            subscription.setStatus(StatusType.PENDING);
+            subscription.setNextBillingDate(null);
+            subscriptionRepository.save(subscription);
+            log.info("Subscription status set to PENDING for premium upgrade: {}, user: {}", subscriptionId, userId);
+
+            try {
+                log.info("Initiating synchronous payment creation for premium upgrade: {}, user: {}", subscriptionId, userId);
+                String confirmationUrl = billingServiceClient.createPayment(subscriptionId, userId);
+                response.setConfirmationUrl(confirmationUrl);
+                response.setStatus(StatusType.PENDING);
+                response.setMessage("Plan updated to PREMIUM. Please complete payment using the provided URL to activate.");
+                log.info("Payment initiated successfully for premium upgrade: {}, confirmationUrl obtained", subscriptionId);
+            } catch (Exception e) {
+                log.error("Failed to create payment for premium upgrade: {}, user: {}, error: {}",
+                        subscriptionId, userId, e.getMessage(), e);
+                response.setMessage("Plan updated to PREMIUM but payment initiation failed. Please try again later.");
+            }
+
+            log.info("Sending async premium subscription request to Kafka for upgrade: {}", subscriptionId);
+            premiumSubscriptionProducer.sendPremiumSubscriptionRequest(updatedSubscription, userId, userEmail);
         }
 
         return response;
@@ -151,52 +198,6 @@ public class SubscriptionServiceImpl implements SubscriptionService {
         return count;
     }
 
-    @Override
-    @Transactional
-    public SubscriptionResponse updateSubscriptionPlan(UUID subscriptionId, UUID userId, PlanType newPlan) {
-        log.info("Updating subscription plan: {} for user: {} to: {}", subscriptionId, userId, newPlan);
-
-        Subscription subscription = ownershipValidator.validateAndGetSubscription(subscriptionId, userId);
-
-        if (subscription.getStatus() != StatusType.ACTIVE) {
-            log.warn("Invalid status for plan update: subscription={}, currentStatus={}, requiredStatus={}, user={}",
-                    subscriptionId, subscription.getStatus(), StatusType.ACTIVE, userId);
-            throw new InvalidSubscriptionStatusException(subscriptionId, subscription.getStatus(), StatusType.ACTIVE);
-        }
-
-        subscription.setPlanType(newPlan);
-        subscription.setUpdatedAt(LocalDateTime.now());
-
-        Subscription updatedSubscription = subscriptionRepository.save(subscription);
-        log.info("Subscription plan updated: {}, user: {}, newPlan: {}", subscriptionId, userId, newPlan);
-
-        SubscriptionResponse response = entityMapper.map(updatedSubscription, SubscriptionResponse.class);
-
-        if (newPlan == PlanType.PREMIUM) {
-            subscription.setStatus(StatusType.PENDING);
-            subscription.setNextBillingDate(null);
-            subscriptionRepository.save(subscription);
-            log.info("Subscription status set to PENDING for premium upgrade: {}, user: {}", subscriptionId, userId);
-
-            try {
-                log.info("Initiating synchronous payment creation for premium upgrade: {}, user: {}", subscriptionId, userId);
-                String confirmationUrl = billingServiceClient.createPayment(subscriptionId, userId);
-                response.setConfirmationUrl(confirmationUrl);
-                response.setStatus(StatusType.PENDING);
-                response.setMessage("Plan updated to PREMIUM. Please complete payment using the provided URL to activate.");
-                log.info("Payment initiated successfully for premium upgrade: {}, confirmationUrl obtained", subscriptionId);
-            } catch (Exception e) {
-                log.error("Failed to create payment for premium upgrade: {}, user: {}, error: {}",
-                        subscriptionId, userId, e.getMessage(), e);
-                response.setMessage("Plan updated to PREMIUM but payment initiation failed. Please try again later.");
-            }
-
-            log.info("Sending async premium subscription request to Kafka for upgrade: {}", subscriptionId);
-            premiumSubscriptionProducer.sendPremiumSubscriptionRequest(updatedSubscription, userId);
-        }
-
-        return response;
-    }
 
     @Transactional
     public void activatePremiumSubscription(UUID subscriptionId) {

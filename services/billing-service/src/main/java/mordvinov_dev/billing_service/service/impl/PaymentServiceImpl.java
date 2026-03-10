@@ -72,6 +72,12 @@ public class PaymentServiceImpl implements PaymentService {
 
             Payment createdPayment = paymentProcessor.create(payment, null);
 
+            String userEmail = null;
+            if (request.getMetadata() != null && request.getMetadata().containsKey("userEmail")) {
+                userEmail = request.getMetadata().get("userEmail");
+                log.debug("Extracted user email from metadata: {}", userEmail);
+            }
+
             PaymentEntity entity = PaymentEntity.builder()
                     .paymentId(createdPayment.getId())
                     .userId(userId)
@@ -82,6 +88,7 @@ public class PaymentServiceImpl implements PaymentService {
                     .description(createdPayment.getDescription())
                     .paymentMethodId(createdPayment.getPaymentMethod() != null ? createdPayment.getPaymentMethod().getId() : null)
                     .paymentMethodType(createdPayment.getPaymentMethod() != null ? createdPayment.getPaymentMethod().getType() : null)
+                    .userEmail(userEmail)
                     .build();
 
             paymentRepository.save(entity);
@@ -89,7 +96,7 @@ public class PaymentServiceImpl implements PaymentService {
             PaymentResponse response = entityMapper.map(entity, PaymentResponse.class);
             response.setConfirmationUrl(createdPayment.getConfirmation().getConfirmationUrl());
 
-            log.info("Payment created successfully: {} for user: {}", createdPayment.getId(), userId);
+            log.info("Payment created successfully: {} for user: {}, email: {}", createdPayment.getId(), userId, userEmail);
             return response;
 
         } catch (Exception e) {

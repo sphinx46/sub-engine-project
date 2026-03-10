@@ -38,7 +38,10 @@ spring:
       key-serializer: org.apache.kafka.common.serialization.StringSerializer
       value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
       properties:
-        spring.json.type.mapping: premiumSubscriptionResponse:mordvinov_dev.billing_service.event.PremiumSubscriptionResponseEvent
+        spring.json.type.mapping: |
+          premiumSubscriptionResponse:mordvinov_dev.billing_service.event.PremiumSubscriptionResponseEvent,
+          paymentEvent:mordvinov_dev.billing_service.event.PaymentEvent
+        spring.json.add.type.headers: false
     consumer:
       key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
       value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
@@ -65,3 +68,9 @@ youkassa:
   secret-key: ${YOOKASSA_SECRET_KEY}
   return-url: ${YOOKASSA_RETURN_URL:https://example.com/payment/return}
   webhook-url: ${YOOKASSA_WEBHOOK_URL:https://api-gateway:8084/api/billing/webhook}
+
+kafka:
+  topics:
+    payment-events: payment.events
+    premium-subscription-request: premium-subscription-request
+    premium-subscription-response: premium-subscription-response

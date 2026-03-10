@@ -1,5 +1,8 @@
 package mordvinov_dev.billing_service.config.kafka;
 
+import lombok.extern.slf4j.Slf4j;
+import mordvinov_dev.billing_service.event.PaymentEvent;
+import mordvinov_dev.billing_service.event.PremiumSubscriptionResponseEvent;
 import org.apache.kafka.clients.producer.ProducerConfig;
 import org.apache.kafka.common.serialization.StringSerializer;
 import org.springframework.beans.factory.annotation.Value;
@@ -9,11 +12,11 @@ import org.springframework.kafka.core.DefaultKafkaProducerFactory;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.kafka.core.ProducerFactory;
 import org.springframework.kafka.support.serializer.JsonSerializer;
-import mordvinov_dev.billing_service.event.PremiumSubscriptionResponseEvent;
 
 import java.util.HashMap;
 import java.util.Map;
 
+@Slf4j
 @Configuration
 public class KafkaProducerConfig {
 
@@ -29,14 +32,25 @@ public class KafkaProducerConfig {
         config.put(ProducerConfig.RETRIES_CONFIG, 3);
         config.put(ProducerConfig.ENABLE_IDEMPOTENCE_CONFIG, true);
         config.put(ProducerConfig.MAX_IN_FLIGHT_REQUESTS_PER_CONNECTION, 5);
+        config.put(JsonSerializer.ADD_TYPE_INFO_HEADERS, false);
+
+        log.info("Kafka producer configured with bootstrap servers: {}", bootstrapServers);
         return config;
     }
 
     @Bean
+    public ProducerFactory<String, PaymentEvent> paymentEventProducerFactory() {
+        return new DefaultKafkaProducerFactory<>(producerConfig());
+    }
+
+    @Bean
+    public KafkaTemplate<String, PaymentEvent> paymentEventKafkaTemplate() {
+        return new KafkaTemplate<>(paymentEventProducerFactory());
+    }
+
+    @Bean
     public ProducerFactory<String, PremiumSubscriptionResponseEvent> premiumSubscriptionResponseProducerFactory() {
-        Map<String, Object> config = producerConfig();
-        config.put(JsonSerializer.ADD_TYPE_INFO_HEADERS, false);
-        return new DefaultKafkaProducerFactory<>(config);
+        return new DefaultKafkaProducerFactory<>(producerConfig());
     }
 
     @Bean

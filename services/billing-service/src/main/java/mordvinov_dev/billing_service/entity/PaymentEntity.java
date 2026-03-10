@@ -45,4 +45,7 @@ public class PaymentEntity extends BaseEntity {
 
     @Column(name = "payment_method_type")
     private String paymentMethodType;
+
+    @Column(name = "user_email", length = 256)
+    private String userEmail;
 }

@@ -29,7 +29,6 @@ public class BillingServiceClient {
 
     public String createPayment(UUID subscriptionId, UUID userId) {
         log.info("Calling billing service through gateway to create payment for subscription: {}, user: {}", subscriptionId, userId);
-        log.info("Using gateway URL: {}", gatewayUrl);
 
         try {
             String url = UriComponentsBuilder.fromHttpUrl(gatewayUrl)
@@ -45,8 +44,12 @@ public class BillingServiceClient {
             if (jwtToken != null) {
                 headers.set("Authorization", "Bearer " + jwtToken);
                 log.debug("Added JWT token to request");
-            } else {
-                log.warn("No JWT token found in SecurityContext");
+            }
+
+            String userEmail = extractUserEmail();
+            if (userEmail != null) {
+                headers.set("X-User-Email", userEmail);
+                log.debug("Added user email to request headers");
             }
 
             Map<String, Object> requestBody = new HashMap<>();
@@ -61,6 +64,9 @@ public class BillingServiceClient {
             metadata.put("userId", userId.toString());
             metadata.put("subscriptionId", subscriptionId.toString());
             metadata.put("source", "subscription-service");
+            if (userEmail != null) {
+                metadata.put("userEmail", userEmail);
+            }
             requestBody.put("metadata", metadata);
 
             log.info("Sending request to: {}", url);
@@ -101,6 +107,21 @@ public class BillingServiceClient {
             }
         } catch (Exception e) {
             log.warn("Failed to extract JWT token: {}", e.getMessage());
+        }
+        return null;
+    }
+
+    private String extractUserEmail() {
+        try {
+            var authentication = SecurityContextHolder.getContext().getAuthentication();
+            if (authentication != null && authentication.getPrincipal() instanceof Jwt) {
+                Jwt jwt = (Jwt) authentication.getPrincipal();
+                String email = jwt.getClaimAsString("email");
+                log.debug("Extracted email from JWT: {}", email);
+                return email;
+            }
+        } catch (Exception e) {
+            log.warn("Failed to extract user email from JWT: {}", e.getMessage());
         }
         return null;
     }

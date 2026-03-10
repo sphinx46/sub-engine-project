@@ -26,11 +26,22 @@ public class NotificationServiceImpl implements NotificationService {
     public Notification createNotification(PaymentEvent event) {
         String type = "PAYMENT_" + event.getStatus().toUpperCase();
 
+        String recipient = event.getUserEmail() != null && !event.getUserEmail().isEmpty()
+                ? event.getUserEmail()
+                : defaultEmailRecipient;
+
+        if (event.getUserEmail() == null || event.getUserEmail().isEmpty()) {
+            log.warn("User email not found in PaymentEvent for userId: {}, using default recipient: {}",
+                    event.getUserId(), defaultEmailRecipient);
+        } else {
+            log.debug("Using user email for notification: {}", recipient);
+        }
+
         Notification notification = Notification.builder()
                 .userId(event.getUserId())
                 .type(type)
                 .channel(NotificationChannel.EMAIL.name())
-                .recipient(defaultEmailRecipient)
+                .recipient(recipient)
                 .subject(getSubject(event.getStatus()))
                 .content(buildContent(event))
                 .sent(false)
@@ -38,7 +49,8 @@ public class NotificationServiceImpl implements NotificationService {
                 .build();
 
         Notification saved = notificationRepository.save(notification);
-        log.info("Notification created: id={}, userId={}, type={}", saved.getId(), event.getUserId(), type);
+        log.info("Notification created: id={}, userId={}, type={}, recipient={}",
+                saved.getId(), event.getUserId(), type, recipient);
 
         return saved;
     }
@@ -49,7 +61,7 @@ public class NotificationServiceImpl implements NotificationService {
         notification.setSentAt(LocalDateTime.now());
 
         Notification updated = notificationRepository.save(notification);
-        log.debug("Notification marked as sent: id={}", updated.getId());
+        log.debug("Notification marked as sent: id={}, recipient={}", updated.getId(), updated.getRecipient());
 
         return NotificationResponse.builder()
                 .notificationId(updated.getId())
@@ -65,7 +77,8 @@ public class NotificationServiceImpl implements NotificationService {
         notification.setSentAt(LocalDateTime.now());
 
         Notification updated = notificationRepository.save(notification);
-        log.debug("Notification marked as failed: id={}, error={}", updated.getId(), error);
+        log.debug("Notification marked as failed: id={}, recipient={}, error={}",
+                updated.getId(), updated.getRecipient(), error);
 
         return NotificationResponse.builder()
                 .notificationId(updated.getId())
