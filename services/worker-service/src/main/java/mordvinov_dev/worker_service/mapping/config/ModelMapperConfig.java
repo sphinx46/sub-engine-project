@@ -2,7 +2,7 @@ package mordvinov_dev.worker_service.mapping.config;
 
 import lombok.extern.slf4j.Slf4j;
 import mordvinov_dev.worker_service.domain.document.Notification;
-import mordvinov_dev.worker_service.domain.dto.response.NotificationResult;
+import mordvinov_dev.worker_service.domain.dto.response.NotificationResponse;
 import org.modelmapper.ModelMapper;
 import org.modelmapper.PropertyMap;
 import org.springframework.context.annotation.Bean;
@@ -31,7 +31,7 @@ public class ModelMapperConfig {
     }
 
     private void configureNotificationMappings(final ModelMapper modelMapper) {
-        modelMapper.addMappings(new PropertyMap<Notification, NotificationResult>() {
+        modelMapper.addMappings(new PropertyMap<Notification, NotificationResponse>() {
             @Override
             protected void configure() {
                 map().setNotificationId(source.getId());

@@ -1,18 +1,18 @@
 package mordvinov_dev.worker_service;
 
-import mordvinov_dev.worker_service.config.TestMongoDBConfig;
-import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.ContextConfiguration;
+import org.testcontainers.junit.jupiter.Testcontainers;
+import mordvinov_dev.worker_service.config.TestMongoDBConfig;
 
 @SpringBootTest
 @ActiveProfiles("test")
+@Testcontainers
 @ContextConfiguration(classes = TestMongoDBConfig.class)
-class WorkerServiceApplicationTests {
+public abstract class BaseIntegrationTest {
 
-	@Test
-	void contextLoads() {
-	}
-
+    static {
+        System.setProperty("MONGODB_TEST_URI", TestMongoDBConfig.getConnectionString());
+    }
 }
