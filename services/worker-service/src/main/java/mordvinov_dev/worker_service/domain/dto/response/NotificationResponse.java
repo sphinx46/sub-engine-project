@@ -13,7 +13,7 @@ import java.time.LocalDateTime;
 @NoArgsConstructor
 @AllArgsConstructor
 @Schema(description = "Результат отправки уведомления")
-public class NotificationResult {
+public class NotificationResponse {
 
     @Schema(description = "ID уведомления", example = "123e4567-e89b-12d3-a456-426614174000")
     private String notificationId;

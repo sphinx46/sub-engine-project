@@ -1,33 +1,30 @@
-package mordvinov_dev.worker_service.service.notification.strategy.email;
+package mordvinov_dev.worker_service.service.notification.sender.email;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-
-import mordvinov_dev.worker_service.domain.NotificationType;
+import mordvinov_dev.worker_service.domain.document.enums.NotificationChannel;
 import mordvinov_dev.worker_service.domain.dto.request.NotificationRequest;
-import mordvinov_dev.worker_service.domain.dto.response.NotificationResult;
-import mordvinov_dev.worker_service.exception.NotificationSendException;
-import mordvinov_dev.worker_service.service.notification.strategy.NotificationStrategy;
-import mordvinov_dev.worker_service.service.notification.strategy.NotificationTemplateProcessor;
+import mordvinov_dev.worker_service.domain.dto.response.NotificationResponse;
+import mordvinov_dev.worker_service.service.notification.NotificationTemplateProcessor;
+import mordvinov_dev.worker_service.service.notification.sender.NotificationSender;
 import org.springframework.mail.MailException;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.stereotype.Component;
-
 import java.time.LocalDateTime;
 import java.util.UUID;
 
 @Slf4j
 @Component
 @RequiredArgsConstructor
-public class EmailNotificationStrategy implements NotificationStrategy {
+public class EmailNotificationSender implements NotificationSender {
 
     private final JavaMailSender mailSender;
     private final NotificationTemplateProcessor templateProcessor;
 
     @Override
-    public NotificationResult send(NotificationRequest request) {
-        log.info("Sending email notification to: {}, subject: {}", request.getRecipient(), request.getSubject());
+    public NotificationResponse send(NotificationRequest request) {
+        log.info("Sending email to: {}, subject: {}", request.getRecipient(), request.getSubject());
 
         String notificationId = UUID.randomUUID().toString();
 
@@ -41,9 +38,9 @@ public class EmailNotificationStrategy implements NotificationStrategy {
 
             mailSender.send(message);
 
-            log.info("Email sent successfully to: {}, notificationId: {}", request.getRecipient(), notificationId);
+            log.info("Email sent successfully: {}", notificationId);
 
-            return NotificationResult.builder()
+            return NotificationResponse.builder()
                     .notificationId(notificationId)
                     .success(true)
                     .message("Email sent successfully")
@@ -51,30 +48,29 @@ public class EmailNotificationStrategy implements NotificationStrategy {
                     .build();
 
         } catch (MailException e) {
-            log.error("Failed to send email to: {}, notificationId: {}, error: {}",
-                    request.getRecipient(), notificationId, e.getMessage(), e);
+            log.error("Failed to send email: {}, error: {}", notificationId, e.getMessage());
 
-            throw new NotificationSendException(
-                    String.format("Failed to send email to %s: %s", request.getRecipient(), e.getMessage()),
-                    e
-            );
+            return NotificationResponse.builder()
+                    .notificationId(notificationId)
+                    .success(false)
+                    .message("Failed to send email: " + e.getMessage())
+                    .timestamp(LocalDateTime.now())
+                    .build();
         }
     }
 
     @Override
-    public NotificationType getType() {
-        return NotificationType.EMAIL;
+    public NotificationChannel getChannel() {
+        return NotificationChannel.EMAIL;
     }
 
     private String resolveContent(NotificationRequest request) {
-        if (request.getContent() != null && !request.getContent().isEmpty()) {
+        if (request.getContent() != null) {
             return request.getContent();
         }
-
         if (request.getTemplateName() != null && request.getTemplateData() != null) {
             return templateProcessor.process(request.getTemplateName(), request.getTemplateData());
         }
-
-        throw new IllegalArgumentException("Either content or templateName with templateData must be provided");
+        return "";
     }
 }

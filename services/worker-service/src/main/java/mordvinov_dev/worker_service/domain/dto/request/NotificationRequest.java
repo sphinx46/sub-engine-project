@@ -5,7 +5,7 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import lombok.Builder;
 import lombok.Value;
-import mordvinov_dev.worker_service.domain.NotificationType;
+import mordvinov_dev.worker_service.domain.document.enums.NotificationChannel;
 
 import java.util.Map;
 import java.util.UUID;
@@ -21,7 +21,7 @@ public class NotificationRequest {
 
     @NotNull(message = "Notification type is required")
     @Schema(description = "Тип уведомления", required = true)
-    NotificationType type;
+    NotificationChannel channel;
 
     @NotBlank(message = "Recipient is required")
     @Schema(description = "Получатель (email/токен)", example = "user@example.com", required = true)
