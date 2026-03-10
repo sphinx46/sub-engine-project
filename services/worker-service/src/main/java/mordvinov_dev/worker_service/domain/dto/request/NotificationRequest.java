@@ -1,11 +1,11 @@
-package mordvinov_dev.worker_service.notification.domain.dto.request;
+package mordvinov_dev.worker_service.domain.dto.request;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import lombok.Builder;
 import lombok.Value;
-import mordvinov_dev.worker_service.notification.domain.NotificationType;
+import mordvinov_dev.worker_service.domain.NotificationType;
 
 import java.util.Map;
 import java.util.UUID;

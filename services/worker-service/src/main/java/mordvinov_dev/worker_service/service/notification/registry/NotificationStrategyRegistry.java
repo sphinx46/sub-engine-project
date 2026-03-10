@@ -1,9 +1,9 @@
-package mordvinov_dev.worker_service.notification.registry;
+package mordvinov_dev.worker_service.service.notification.registry;
 
 import lombok.extern.slf4j.Slf4j;
-import mordvinov_dev.worker_service.notification.domain.NotificationType;
-import mordvinov_dev.worker_service.notification.strategy.NotificationStrategy;
-import mordvinov_dev.worker_service.notification.exception.NotificationStrategyNotFoundException;
+import mordvinov_dev.worker_service.domain.NotificationType;
+import mordvinov_dev.worker_service.service.notification.strategy.NotificationStrategy;
+import mordvinov_dev.worker_service.exception.NotificationStrategyNotFoundException;
 import org.springframework.stereotype.Component;
 
 import java.util.EnumMap;

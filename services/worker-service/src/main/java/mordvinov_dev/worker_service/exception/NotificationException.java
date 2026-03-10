@@ -1,4 +1,4 @@
-package mordvinov_dev.worker_service.notification.exception;
+package mordvinov_dev.worker_service.exception;
 
 public class NotificationException extends RuntimeException {
 

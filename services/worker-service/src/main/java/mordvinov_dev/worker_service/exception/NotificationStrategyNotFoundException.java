@@ -1,6 +1,6 @@
-package mordvinov_dev.worker_service.notification.exception;
+package mordvinov_dev.worker_service.exception;
 
-import mordvinov_dev.worker_service.notification.domain.NotificationType;
+import mordvinov_dev.worker_service.domain.NotificationType;
 
 public class NotificationStrategyNotFoundException extends NotificationException {
 

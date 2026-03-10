@@ -1,4 +1,4 @@
-package mordvinov_dev.worker_service.notification.domain.dto.response;
+package mordvinov_dev.worker_service.domain.dto.response;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Builder;

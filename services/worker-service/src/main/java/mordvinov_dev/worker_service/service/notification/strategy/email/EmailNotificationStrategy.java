@@ -1,14 +1,14 @@
-package mordvinov_dev.worker_service.notification.strategy.email;
+package mordvinov_dev.worker_service.service.notification.strategy.email;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
-import mordvinov_dev.worker_service.notification.domain.NotificationType;
-import mordvinov_dev.worker_service.notification.domain.dto.request.NotificationRequest;
-import mordvinov_dev.worker_service.notification.domain.dto.response.NotificationResult;
-import mordvinov_dev.worker_service.notification.exception.NotificationSendException;
-import mordvinov_dev.worker_service.notification.strategy.NotificationStrategy;
-import mordvinov_dev.worker_service.notification.strategy.NotificationTemplateProcessor;
+import mordvinov_dev.worker_service.domain.NotificationType;
+import mordvinov_dev.worker_service.domain.dto.request.NotificationRequest;
+import mordvinov_dev.worker_service.domain.dto.response.NotificationResult;
+import mordvinov_dev.worker_service.exception.NotificationSendException;
+import mordvinov_dev.worker_service.service.notification.strategy.NotificationStrategy;
+import mordvinov_dev.worker_service.service.notification.strategy.NotificationTemplateProcessor;
 import org.springframework.mail.MailException;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;

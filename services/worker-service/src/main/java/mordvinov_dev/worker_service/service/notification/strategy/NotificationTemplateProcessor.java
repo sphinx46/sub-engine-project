@@ -1,4 +1,4 @@
-package mordvinov_dev.worker_service.notification.strategy;
+package mordvinov_dev.worker_service.service.notification.strategy;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;

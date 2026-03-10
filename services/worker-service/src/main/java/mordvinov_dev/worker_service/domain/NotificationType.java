@@ -1,4 +1,4 @@
-package mordvinov_dev.worker_service.notification.domain;
+package mordvinov_dev.worker_service.domain;
 
 
 import io.swagger.v3.oas.annotations.media.Schema;
