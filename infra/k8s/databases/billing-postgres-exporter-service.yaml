@@ -1,0 +1,15 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: billing-postgres-exporter
+  namespace: sub-engine
+  labels:
+    app: billing-postgres-exporter
+spec:
+  selector:
+    app: billing-postgres-exporter
+  ports:
+    - port: 9188
+      targetPort: 9188
+      name: metrics
+  type: ClusterIP

@@ -1,0 +1,43 @@
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: api-gateway-pdb
+  namespace: sub-engine
+spec:
+  minAvailable: 1
+  selector:
+    matchLabels:
+      app: api-gateway
+---
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: subscription-service-pdb
+  namespace: sub-engine
+spec:
+  minAvailable: 1
+  selector:
+    matchLabels:
+      app: subscription-service
+---
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: billing-service-pdb
+  namespace: sub-engine
+spec:
+  minAvailable: 1
+  selector:
+    matchLabels:
+      app: billing-service
+---
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: worker-service-pdb
+  namespace: sub-engine
+spec:
+  minAvailable: 1
+  selector:
+    matchLabels:
+      app: worker-service

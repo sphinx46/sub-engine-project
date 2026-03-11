@@ -1,0 +1,36 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: billing-postgres-exporter
+  namespace: sub-engine
+  labels:
+    app: billing-postgres-exporter
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: billing-postgres-exporter
+  template:
+    metadata:
+      labels:
+        app: billing-postgres-exporter
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "9188"
+    spec:
+      containers:
+        - name: exporter
+          image: prometheuscommunity/postgres-exporter:latest
+          ports:
+            - containerPort: 9188
+              name: metrics
+          env:
+            - name: DATA_SOURCE_NAME
+              value: "postgresql://billing:billing@billing-postgres:5432/billing?sslmode=disable"
+          resources:
+            requests:
+              memory: "64Mi"
+              cpu: "50m"
+            limits:
+              memory: "128Mi"
+              cpu: "100m"
