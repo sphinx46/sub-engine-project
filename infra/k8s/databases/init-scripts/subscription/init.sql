@@ -1,1 +1,0 @@
-../databases/subscription/init.sql
