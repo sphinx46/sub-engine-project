@@ -173,23 +173,33 @@ class SubscriptionServiceImplTest {
         subscription.setId(subscriptionId);
         subscription.setStatus(StatusType.ACTIVE);
         subscription.setPlanType(PlanType.FREE);
-        SubscriptionResponse expectedResponse = new SubscriptionResponse();
+        SubscriptionResponse response = new SubscriptionResponse();
         String confirmationUrl = "https://payment.example.com/confirm/456";
         
         when(ownershipValidator.validateAndGetSubscription(subscriptionId, userId)).thenReturn(subscription);
         when(subscriptionRepository.save(subscription)).thenReturn(subscription);
-        when(entityMapper.map(subscription, SubscriptionResponse.class)).thenReturn(expectedResponse);
+        when(entityMapper.map(subscription, SubscriptionResponse.class)).thenAnswer(invocation -> {
+            SubscriptionResponse mappedResponse = new SubscriptionResponse();
+            mappedResponse.setId(subscription.getId());
+            mappedResponse.setUserId(subscription.getUserId());
+            mappedResponse.setPlanType(subscription.getPlanType());
+            mappedResponse.setStatus(subscription.getStatus());
+            mappedResponse.setNextBillingDate(subscription.getNextBillingDate());
+            mappedResponse.setCreatedAt(subscription.getCreatedAt());
+            mappedResponse.setUpdatedAt(subscription.getUpdatedAt());
+            return mappedResponse;
+        });
         when(billingServiceClient.createPayment(subscriptionId, userId)).thenReturn(confirmationUrl);
 
-        SubscriptionResponse response = subscriptionService.updateSubscriptionPlan(subscriptionId, userId, newPlan, "user@example.com");
+        SubscriptionResponse actualResponse = subscriptionService.updateSubscriptionPlan(subscriptionId, userId, newPlan, "user@example.com");
 
-        assertNotNull(response);
+        assertNotNull(actualResponse);
         assertEquals(newPlan, subscription.getPlanType());
         assertEquals(StatusType.PENDING, subscription.getStatus());
         assertNull(subscription.getNextBillingDate());
-        assertEquals(confirmationUrl, response.getConfirmationUrl());
-        assertEquals(StatusType.PENDING, response.getStatus());
-        assertEquals("Plan updated to PREMIUM. Please complete payment using the provided URL to activate.", response.getMessage());
+        assertEquals(confirmationUrl, actualResponse.getConfirmationUrl());
+        assertEquals(StatusType.PENDING, actualResponse.getStatus());
+        assertEquals("Plan updated to PREMIUM. Please complete payment using the provided URL to activate.", actualResponse.getMessage());
         verify(subscriptionRepository, times(2)).save(subscription);
         verify(billingServiceClient).createPayment(subscriptionId, userId);
         verify(premiumSubscriptionProducer).sendPremiumSubscriptionRequest(subscription, userId, "user@example.com");

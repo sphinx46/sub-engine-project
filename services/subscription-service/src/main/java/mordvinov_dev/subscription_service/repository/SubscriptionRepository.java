@@ -18,9 +18,5 @@ public interface SubscriptionRepository extends JpaRepository<Subscription, UUID
 
     Page<Subscription> findAllByUserIdAndStatus(UUID userId, StatusType status, Pageable pageable);
 
-    List<Subscription> findAllByStatusAndNextBillingDateBefore(StatusType status, LocalDateTime date);
-
-    boolean existsByIdAndUserId(UUID id, UUID userId);
-
     long countByUserIdAndStatus(UUID userId, StatusType status);
 }
