@@ -13,6 +13,11 @@ public class SenderRegistry {
 
     private final Map<NotificationChannel, NotificationSender> senders = new EnumMap<>(NotificationChannel.class);
 
+    /**
+     * Constructs a SenderRegistry and registers all available notification senders.
+     * 
+     * @param senderList list of notification senders to register
+     */
     public SenderRegistry(List<NotificationSender> senderList) {
         senderList.forEach(sender -> {
             senders.put(sender.getChannel(), sender);
@@ -20,6 +25,13 @@ public class SenderRegistry {
         });
     }
 
+    /**
+     * Retrieves the appropriate notification sender for the specified channel.
+     * 
+     * @param channel the notification channel to get a sender for
+     * @return the notification sender for the specified channel
+     * @throws IllegalArgumentException if no sender is found for the channel
+     */
     public NotificationSender getSender(NotificationChannel channel) {
         NotificationSender sender = senders.get(channel);
         if (sender == null) {

@@ -18,6 +18,7 @@ public class AuditLogServiceImpl implements AuditLogService {
 
     private final AuditLogRepository auditLogRepository;
 
+    /** {@inheritDoc} */
     @Override
     public AuditLog createAuditLog(PaymentEvent event) {
         log.debug("Creating audit log for event: {}", event.getEventId());
@@ -42,6 +43,7 @@ public class AuditLogServiceImpl implements AuditLogService {
         return saved;
     }
 
+    /** {@inheritDoc} */
     @Override
     public boolean existsByEventId(String eventId) {
         return auditLogRepository.existsByEventId(UUID.fromString(eventId));

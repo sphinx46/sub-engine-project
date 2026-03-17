@@ -23,6 +23,7 @@ public class NotificationServiceImpl implements NotificationService {
     @Value("${notification.email.recipient:user@example.com}")
     private String defaultEmailRecipient;
 
+    /** {@inheritDoc} */
     @Override
     public Notification createNotification(PaymentEvent event) {
         try {
@@ -61,6 +62,7 @@ public class NotificationServiceImpl implements NotificationService {
         }
     }
 
+    /** {@inheritDoc} */
     @Override
     public NotificationResponse markAsSent(Notification notification) {
         try {
@@ -84,6 +86,7 @@ public class NotificationServiceImpl implements NotificationService {
         }
     }
 
+    /** {@inheritDoc} */
     @Override
     public NotificationResponse markAsFailed(Notification notification, String error) {
         try {
@@ -107,6 +110,13 @@ public class NotificationServiceImpl implements NotificationService {
         }
     }
 
+    /**
+     * Generates a subject line based on the payment status.
+     * Maps payment status strings to appropriate Russian subject lines.
+     * 
+     * @param status the payment status to generate a subject for
+     * @return the subject line in Russian, or a default subject if status is unknown
+     */
     private String getSubject(String status) {
         try {
             return switch (status.toLowerCase()) {
@@ -122,6 +132,13 @@ public class NotificationServiceImpl implements NotificationService {
         }
     }
 
+    /**
+     * Builds notification content from a payment event.
+     * Creates a formatted Russian message describing the payment status and details.
+     * 
+     * @param event the payment event to build content from
+     * @return the formatted notification content in Russian
+     */
     private String buildContent(PaymentEvent event) {
         try {
             String statusText = switch (event.getStatus().toLowerCase()) {

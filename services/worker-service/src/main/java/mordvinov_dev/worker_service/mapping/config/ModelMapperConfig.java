@@ -8,10 +8,19 @@ import org.modelmapper.PropertyMap;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
+/**
+ * Configuration class for ModelMapper bean setup and custom mappings.
+ * Configures field matching, null handling, and specific entity mappings.
+ */
 @Slf4j
 @Configuration
 public class ModelMapperConfig {
 
+    /**
+     * Creates and configures a ModelMapper bean with custom settings.
+     * 
+     * @return the configured ModelMapper instance
+     */
     @Bean
     public ModelMapper modelMapper() {
         log.info("MODEL_MAPPER_CONFIGURATION_START");
@@ -30,6 +39,11 @@ public class ModelMapperConfig {
         return modelMapper;
     }
 
+    /**
+     * Configures custom mappings for Notification entity to NotificationResponse DTO.
+     * 
+     * @param modelMapper the ModelMapper instance to configure
+     */
     private void configureNotificationMappings(final ModelMapper modelMapper) {
         modelMapper.addMappings(new PropertyMap<Notification, NotificationResponse>() {
             @Override

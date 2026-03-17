@@ -15,6 +15,12 @@ public class PaymentEventListener {
 
     private final PaymentEventProcessor eventProcessor;
 
+    /**
+     * Listens for payment events from Kafka and processes them.
+     * Consumes messages from the payment events topic and delegates processing to the event processor.
+     * 
+     * @param event the payment event received from Kafka
+     */
     @KafkaListener(
             topics = "${kafka.topics.payment-events:payment.events}",
             groupId = "${spring.kafka.consumer.group-id:worker-service-group}",

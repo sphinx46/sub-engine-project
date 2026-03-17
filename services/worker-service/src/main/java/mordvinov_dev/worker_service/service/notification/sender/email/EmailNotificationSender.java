@@ -14,6 +14,10 @@ import org.springframework.stereotype.Component;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
+/**
+ * Email notification sender implementation.
+ * Handles sending email notifications using Spring's JavaMailSender and template processing.
+ */
 @Slf4j
 @Component
 @RequiredArgsConstructor
@@ -22,6 +26,7 @@ public class EmailNotificationSender implements NotificationSender {
     private final JavaMailSender mailSender;
     private final NotificationTemplateProcessor templateProcessor;
 
+    /** {@inheritDoc} */
     @Override
     public NotificationResponse send(NotificationRequest request) {
         log.info("Sending email to: {}, subject: {}", request.getRecipient(), request.getSubject());
@@ -59,11 +64,19 @@ public class EmailNotificationSender implements NotificationSender {
         }
     }
 
+    /** {@inheritDoc} */
     @Override
     public NotificationChannel getChannel() {
         return NotificationChannel.EMAIL;
     }
 
+    /**
+     * Resolves the email content from the notification request.
+     * Uses direct content if available, otherwise processes template with provided data.
+     * 
+     * @param request the notification request containing content or template information
+     * @return the resolved email content
+     */
     private String resolveContent(NotificationRequest request) {
         if (request.getContent() != null) {
             return request.getContent();

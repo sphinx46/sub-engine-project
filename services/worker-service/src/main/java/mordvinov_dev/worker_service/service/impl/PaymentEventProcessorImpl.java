@@ -25,6 +25,7 @@ public class PaymentEventProcessorImpl implements PaymentEventProcessor {
     private final NotificationService notificationService;
     private final SenderRegistry senderRegistry;
 
+    /** {@inheritDoc} */
     @Override
     public void process(PaymentEvent event) {
         log.info("Processing event: eventId={}, status={}, userId={}, email={}",
@@ -62,6 +63,15 @@ public class PaymentEventProcessorImpl implements PaymentEventProcessor {
         }
     }
 
+    /**
+     * Builds a notification request from a payment event and notification.
+     * Extracts relevant data from the payment event and creates template data for the notification.
+     * 
+     * @param event the payment event to extract data from
+     * @param notification the notification containing recipient and subject information
+     * @return the constructed notification request
+     * @throws NotificationException if building the request fails
+     */
     private NotificationRequest buildRequest(PaymentEvent event, Notification notification) {
         try {
             Map<String, Object> templateData = new HashMap<>();
@@ -99,6 +109,13 @@ public class PaymentEventProcessorImpl implements PaymentEventProcessor {
         }
     }
 
+    /**
+     * Maps payment status to corresponding template name.
+     * Converts payment status strings to template names for notification processing.
+     * 
+     * @param status the payment status to convert
+     * @return the corresponding template name, or "default" if status is unknown
+     */
     private String getTemplateName(String status) {
         try {
             return switch (status.toLowerCase()) {

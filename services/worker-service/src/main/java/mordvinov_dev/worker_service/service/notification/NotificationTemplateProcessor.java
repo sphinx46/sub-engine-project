@@ -8,6 +8,14 @@ import java.util.Map;
 @Slf4j
 @Component
 public class NotificationTemplateProcessor {
+    /**
+     * Processes a notification template by name with the provided data.
+     * Supports payment-related templates including success, failed, pending, and canceled statuses.
+     * 
+     * @param templateName the name of the template to process
+     * @param data the data to populate the template with
+     * @return the processed template as a formatted string
+     */
     public String process(String templateName, Map<String, Object> data) {
         log.debug("Processing email template: {}", templateName);
 
@@ -141,6 +149,14 @@ public class NotificationTemplateProcessor {
         );
     }
 
+    /**
+     * Retrieves a value from the data map by key, returning a default value if the key is not found.
+     * 
+     * @param data the map containing the data
+     * @param key the key to look up
+     * @param defaultValue the default value to return if key is not found
+     * @return the value from the map or the default value
+     */
     private Object getValue(Map<String, Object> data, String key, Object defaultValue) {
         return data.getOrDefault(key, defaultValue);
     }
