@@ -12,8 +12,6 @@ import java.util.UUID;
 @Repository
 public interface RefundRepository extends JpaRepository<RefundEntity, UUID> {
     Optional<RefundEntity> findByRefundIdAndUserId(String refundId, UUID userId);
-    Optional<RefundEntity> findByRefundId(String refundId);
     Page<RefundEntity> findAllByPaymentId(String paymentId, Pageable pageable);
     Page<RefundEntity> findAllByUserId(UUID userId, Pageable pageable);
-    boolean existsByRefundId(String refundId);
 }
