@@ -104,14 +104,15 @@ public class SubscriptionServiceImpl implements SubscriptionService {
         if (newPlan == PlanType.PREMIUM) {
             subscription.setStatus(StatusType.PENDING);
             subscription.setNextBillingDate(null);
-            subscriptionRepository.save(subscription);
+            updatedSubscription = subscriptionRepository.save(subscription);
             log.info("Subscription status set to PENDING for premium upgrade: {}, user: {}", subscriptionId, userId);
+
+            response = entityMapper.map(updatedSubscription, SubscriptionResponse.class);
 
             try {
                 log.info("Initiating synchronous payment creation for premium upgrade: {}, user: {}", subscriptionId, userId);
                 String confirmationUrl = billingServiceClient.createPayment(subscriptionId, userId);
                 response.setConfirmationUrl(confirmationUrl);
-                response.setStatus(StatusType.PENDING);
                 response.setMessage("Plan updated to PREMIUM. Please complete payment using the provided URL to activate.");
                 log.info("Payment initiated successfully for premium upgrade: {}, confirmationUrl obtained", subscriptionId);
             } catch (Exception e) {

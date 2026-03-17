@@ -5,6 +5,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.modelmapper.ModelMapper;
 import org.springframework.stereotype.Component;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -29,15 +30,13 @@ public class EntityMapper {
      */
     public <S, T> T map(final S source, final Class<T> targetClass) {
         if (source == null) {
-            log.debug("ENTITY_MAPPER_ПРЕОБРАЗОВАНИЕ: " +
-                    "исходный объект null, возвращается null");
+            log.debug("ENTITY_MAPPER_ПРЕОБРАЗОВАНИЕ: исходный объект null, возвращается null");
             return null;
         }
 
         log.debug("ENTITY_MAPPER_ПРЕОБРАЗОВАНИЕ: преобразование из {} в {}",
                 source.getClass().getSimpleName(), targetClass.getSimpleName());
-        T result = modelMapper.map(source, targetClass);
-        return result;
+        return modelMapper.map(source, targetClass);
     }
 
     /**
@@ -47,23 +46,20 @@ public class EntityMapper {
      * @param targetClass класс целевых объектов
      * @param <S> тип исходных объектов
      * @param <T> тип целевых объектов
-     * @return преобразованный список или пустой список, если source равен null
+     * @return преобразованный список или пустой список, если source равен null или пуст
      */
-    public <S, T> List<T> mapList(
-            final List<S> source, final Class<T> targetClass) {
-        if (source == null) {
-            log.debug("ENTITY_MAPPER_ПРЕОБРАЗОВАНИЕ_СПИСКА: " +
-                    "исходный список null, возвращается пустой список");
-            return List.of();
+    public <S, T> List<T> mapList(final List<S> source, final Class<T> targetClass) {
+        if (source == null || source.isEmpty()) {
+            log.debug("ENTITY_MAPPER_ПРЕОБРАЗОВАНИЕ_СПИСКА: исходный список {} - возвращается пустой список",
+                    source == null ? "null" : "пуст");
+            return Collections.emptyList();
         }
 
-        log.debug("ENTITY_MAPPER_ПРЕОБРАЗОВАНИЕ_СПИСКА: " +
-                        "преобразование списка из {} элементов из {} в {}",
+        log.debug("ENTITY_MAPPER_ПРЕОБРАЗОВАНИЕ_СПИСКА: преобразование списка из {} элементов из {} в {}",
                 source.size(), source.get(0).getClass().getSimpleName(), targetClass.getSimpleName());
 
-        List<T> result = source.stream()
+        return source.stream()
                 .map(element -> modelMapper.map(element, targetClass))
                 .collect(Collectors.toList());
-        return result;
     }
 }

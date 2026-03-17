@@ -15,7 +15,7 @@ import java.util.UUID;
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
-@Table(name = "subscription ", indexes = {
+@Table(name = "subscription", indexes = {
         @Index(name = "subscription_next_billing_date_idx", columnList = "nextBillingDate")
 })
 public class Subscription extends BaseEntity {
@@ -31,6 +31,6 @@ public class Subscription extends BaseEntity {
     @Column(name = "status", nullable = false)
     private StatusType status;
 
-    @Column(name = "next_billing_date", nullable = false)
+    @Column(name = "next_billing_date")
     private LocalDateTime nextBillingDate;
 }
