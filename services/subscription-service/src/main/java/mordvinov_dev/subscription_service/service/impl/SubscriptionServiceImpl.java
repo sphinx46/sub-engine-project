@@ -38,6 +38,7 @@ public class SubscriptionServiceImpl implements SubscriptionService {
     private final PremiumSubscriptionProducer premiumSubscriptionProducer;
     private final BillingServiceClient billingServiceClient;
 
+    /** {@inheritDoc} */
     @Override
     @Transactional
     public SubscriptionResponse createSubscription(CreateSubscriptionRequest request, UUID userId, String userEmail) {
@@ -80,6 +81,7 @@ public class SubscriptionServiceImpl implements SubscriptionService {
         return response;
     }
 
+    /** {@inheritDoc} */
     @Override
     @Transactional
     public SubscriptionResponse updateSubscriptionPlan(UUID subscriptionId, UUID userId, PlanType newPlan, String userEmail) {
@@ -128,6 +130,7 @@ public class SubscriptionServiceImpl implements SubscriptionService {
         return response;
     }
 
+    /** {@inheritDoc} */
     @Override
     public PageResponse<SubscriptionResponse> getUserSubscriptions(UUID userId, PageRequest pageRequest) {
         log.debug("Fetching subscriptions for user: {}, page: {}, size: {}", userId, pageRequest.getPageNumber(), pageRequest.getSize());
@@ -146,6 +149,7 @@ public class SubscriptionServiceImpl implements SubscriptionService {
                 .build();
     }
 
+    /** {@inheritDoc} */
     @Override
     public PageResponse<SubscriptionResponse> getUserSubscriptionsByStatus(UUID userId, StatusType status, PageRequest pageRequest) {
         log.debug("Fetching {} subscriptions for user: {}, page: {}, size: {}", status, userId, pageRequest.getPageNumber(), pageRequest.getSize());
@@ -164,6 +168,7 @@ public class SubscriptionServiceImpl implements SubscriptionService {
                 .build();
     }
 
+    /** {@inheritDoc} */
     @Override
     @Transactional
     public SubscriptionResponse cancelSubscription(UUID subscriptionId, UUID userId) {
@@ -191,6 +196,7 @@ public class SubscriptionServiceImpl implements SubscriptionService {
         return entityMapper.map(updatedSubscription, SubscriptionResponse.class);
     }
 
+    /** {@inheritDoc} */
     @Override
     public long getUserActiveSubscriptionsCount(UUID userId) {
         log.debug("Counting active subscriptions for user: {}", userId);
@@ -200,6 +206,7 @@ public class SubscriptionServiceImpl implements SubscriptionService {
     }
 
 
+    /** {@inheritDoc} */
     @Transactional
     public void activatePremiumSubscription(UUID subscriptionId) {
         log.info("Activating premium subscription: {}", subscriptionId);
@@ -218,6 +225,7 @@ public class SubscriptionServiceImpl implements SubscriptionService {
         log.info("Subscription {} activated successfully", subscriptionId);
     }
 
+    /** {@inheritDoc} */
     @Transactional
     public void failPremiumSubscription(UUID subscriptionId) {
         log.info("Failing premium subscription: {}", subscriptionId);

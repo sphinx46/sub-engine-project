@@ -14,6 +14,9 @@ import java.time.LocalDateTime;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 
+/**
+ * Producer for sending premium subscription request events to Kafka.
+ */
 @Slf4j
 @Component
 @RequiredArgsConstructor
@@ -24,6 +27,12 @@ public class PremiumSubscriptionProducer {
     @Value("${kafka.topics.premium-subscription-request:premium-subscription-request}")
     private String requestTopic;
 
+    /**
+     * Sends a premium subscription request event to Kafka.
+     * @param subscription the subscription entity
+     * @param userId the unique identifier of the user
+     * @param userEmail the email address of the user
+     */
     public void sendPremiumSubscriptionRequest(Subscription subscription, UUID userId, String userEmail) {
         log.info("Sending premium subscription request for subscription: {}, user: {}",
                 subscription.getId(), userId);
@@ -43,6 +52,11 @@ public class PremiumSubscriptionProducer {
         sendRequest(event, userId.toString() + "_" + event.getEventId());
     }
 
+    /**
+     * Sends the premium subscription request event to Kafka topic.
+     * @param event the premium subscription request event
+     * @param key the message key for partitioning
+     */
     private void sendRequest(PremiumSubscriptionRequestEvent event, String key) {
         try {
             CompletableFuture<SendResult<String, PremiumSubscriptionRequestEvent>> future =
