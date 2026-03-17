@@ -1,6 +1,7 @@
 package mordvinov_dev.billing_service.producer;
 
 import mordvinov_dev.billing_service.event.PaymentEvent;
+import mordvinov_dev.billing_service.event.producer.PaymentEventProducer;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;

@@ -1,6 +1,7 @@
 package mordvinov_dev.subscription_service.listener;
 
 import mordvinov_dev.subscription_service.event.PremiumSubscriptionResponseEvent;
+import mordvinov_dev.subscription_service.event.listener.PremiumSubscriptionResponseListener;
 import mordvinov_dev.subscription_service.service.impl.SubscriptionServiceImpl;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;

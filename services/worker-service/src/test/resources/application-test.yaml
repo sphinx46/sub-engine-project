@@ -7,14 +7,21 @@ spring:
         enabled: true
 
   kafka:
-    enabled: false
     bootstrap-servers: ${spring.embedded.kafka.brokers:localhost:9092}
     consumer:
       group-id: worker-service-test
       auto-offset-reset: earliest
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.apache.kafka.common.serialization.StringDeserializer
       properties:
-        spring.json.trusted.packages: mordvinov_dev.worker_service.event
+        spring.json.trusted.packages: "*"
         spring.json.type.mapping: paymentEvent:mordvinov_dev.worker_service.event.PaymentEvent
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.apache.kafka.common.serialization.StringSerializer
+    listener:
+      ack-mode: record
+      concurrency: 1
 
   mail:
     host: localhost

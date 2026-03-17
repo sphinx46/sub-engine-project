@@ -4,6 +4,7 @@ import mordvinov_dev.subscription_service.entity.Subscription;
 import mordvinov_dev.subscription_service.entity.enums.PlanType;
 import mordvinov_dev.subscription_service.entity.enums.StatusType;
 import mordvinov_dev.subscription_service.event.PremiumSubscriptionRequestEvent;
+import mordvinov_dev.subscription_service.event.producer.PremiumSubscriptionProducer;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;

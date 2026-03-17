@@ -13,7 +13,7 @@ import mordvinov_dev.subscription_service.entity.enums.StatusType;
 import mordvinov_dev.subscription_service.exception.InvalidSubscriptionStatusException;
 import mordvinov_dev.subscription_service.exception.SubscriptionAlreadyCancelledException;
 import mordvinov_dev.subscription_service.mapping.EntityMapper;
-import mordvinov_dev.subscription_service.producer.PremiumSubscriptionProducer;
+import mordvinov_dev.subscription_service.event.producer.PremiumSubscriptionProducer;
 import mordvinov_dev.subscription_service.repository.SubscriptionRepository;
 import mordvinov_dev.subscription_service.service.SubscriptionService;
 import mordvinov_dev.subscription_service.validation.SubscriptionOwnershipValidator;

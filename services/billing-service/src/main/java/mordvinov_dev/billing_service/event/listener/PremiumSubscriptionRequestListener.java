@@ -1,4 +1,4 @@
-package mordvinov_dev.billing_service.listener;
+package mordvinov_dev.billing_service.event.listener;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;

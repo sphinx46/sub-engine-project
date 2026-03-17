@@ -1,4 +1,4 @@
-package mordvinov_dev.subscription_service.listener;
+package mordvinov_dev.subscription_service.event.listener;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;

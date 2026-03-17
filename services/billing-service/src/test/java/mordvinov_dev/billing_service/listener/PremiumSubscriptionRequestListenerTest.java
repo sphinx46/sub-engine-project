@@ -3,6 +3,7 @@ package mordvinov_dev.billing_service.listener;
 import mordvinov_dev.billing_service.dto.request.CreatePaymentRequest;
 import mordvinov_dev.billing_service.dto.response.PaymentResponse;
 import mordvinov_dev.billing_service.event.PremiumSubscriptionRequestEvent;
+import mordvinov_dev.billing_service.event.listener.PremiumSubscriptionRequestListener;
 import mordvinov_dev.billing_service.service.PaymentService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;

@@ -1,4 +1,4 @@
-package mordvinov_dev.subscription_service.producer;
+package mordvinov_dev.subscription_service.event.producer;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
