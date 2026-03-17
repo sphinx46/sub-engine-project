@@ -18,11 +18,26 @@ import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.Map;
 
+/**
+ * Global exception handler for the API Gateway.
+ * Handles all exceptions that occur during request processing and returns
+ * standardized JSON error responses with proper HTTP status codes.
+ * This handler has high precedence (-2) to ensure it catches exceptions
+ * before other handlers.
+ */
 @Slf4j
 @Component
 @Order(-2)
 public class GlobalExceptionHandler implements ErrorWebExceptionHandler {
 
+    /**
+     * Handles exceptions that occur during request processing and creates
+     * standardized JSON error responses.
+     * 
+     * @param exchange the server web exchange containing the request and response
+     * @param ex the throwable exception that occurred
+     * @return a Mono that completes when the error response is written
+     */
     @Override
     public Mono<Void> handle(ServerWebExchange exchange, Throwable ex) {
         ServerHttpResponse response = exchange.getResponse();

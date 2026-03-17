@@ -13,10 +13,25 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+/**
+ * Configuration class for Swagger/OpenAPI documentation in the API Gateway.
+ * Automatically discovers and configures API documentation for all microservices
+ * that follow the "-service" naming convention.
+ * This configuration is active in all profiles except "test".
+ */
 @Configuration
 @Profile("!test")
 public class SwaggerConfig {
 
+    /**
+     * Creates a set of Swagger URLs for all discovered microservices.
+     * Scans the gateway route definitions and automatically creates Swagger
+     * documentation endpoints for services with names ending in "-service".
+     * 
+     * @param locator the route definition locator for discovering available services
+     * @param swaggerUiConfigProperties the Swagger UI configuration properties to update
+     * @return a set of Swagger URLs for all discovered microservices
+     */
     @Bean
     @Lazy(false)
     @ConditionalOnBean(RouteDefinitionLocator.class)

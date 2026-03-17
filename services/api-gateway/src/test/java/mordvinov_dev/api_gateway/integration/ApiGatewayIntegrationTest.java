@@ -1,4 +1,4 @@
-package mordvinov_dev.api_gateway;
+package mordvinov_dev.api_gateway.integration;
 
 import mordvinov_dev.api_gateway.config.TestSecurityConfig;
 import org.junit.jupiter.api.Test;

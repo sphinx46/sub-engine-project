@@ -14,22 +14,55 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.server.ServerWebExchange;
 import reactor.core.publisher.Mono;
 
+/**
+ * Global filter that extracts user information from JWT authentication tokens
+ * and adds it as HTTP headers for downstream services.
+ * This filter runs with highest precedence + 1 to ensure it executes after
+ * correlation ID filtering but before other filters.
+ */
 @Slf4j
 @Component
 @Order(Ordered.HIGHEST_PRECEDENCE + 1)
 @RequiredArgsConstructor
 public class ExtractorFilter implements GlobalFilter, Ordered {
 
+    /**
+     * Header name for user ID extracted from JWT.
+     */
     private static final String USER_ID_HEADER = "X-User-Id";
+    
+    /**
+     * Header name for user email extracted from JWT.
+     */
     private static final String USER_EMAIL_HEADER = "X-User-Email";
+    
+    /**
+     * JWT claim name for user ID (subject).
+     */
     private static final String USER_ID_CLAIM = "sub";
+    
+    /**
+     * JWT claim name for user email.
+     */
     private static final String USER_EMAIL_CLAIM = "email";
 
+    /**
+     * Initializes the filter and logs its execution order.
+     * This method is called after dependency injection is complete.
+     */
     @PostConstruct
     public void init() {
         log.info("UserIdExtractorFilter initialized with order: {}", getOrder());
     }
 
+    /**
+     * Processes the incoming request by extracting user information from JWT token
+     * and adding it as headers to the request for downstream services.
+     * 
+     * @param exchange the server web exchange containing the request and response
+     * @param chain the gateway filter chain to continue processing
+     * @return a Mono that completes when the filter processing is done
+     */
     @Override
     public Mono<Void> filter(ServerWebExchange exchange, GatewayFilterChain chain) {
         ServerHttpRequest request = exchange.getRequest();
@@ -69,6 +102,11 @@ public class ExtractorFilter implements GlobalFilter, Ordered {
                 }));
     }
 
+    /**
+     * Returns the order precedence for this filter.
+     * 
+     * @return the filter order value (highest precedence + 1)
+     */
     @Override
     public int getOrder() {
         return Ordered.HIGHEST_PRECEDENCE + 1;
