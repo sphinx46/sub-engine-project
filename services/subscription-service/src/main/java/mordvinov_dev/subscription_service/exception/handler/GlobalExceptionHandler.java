@@ -19,34 +19,62 @@ import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.Map;
 
+/**
+ * Global exception handler for the subscription service.
+ */
 @Slf4j
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
+    /**
+     * Handles SubscriptionNotFoundException.
+     * @param ex the exception to handle
+     * @return error response with NOT_FOUND status
+     */
     @ExceptionHandler(SubscriptionNotFoundException.class)
     public ResponseEntity<ErrorResponse> handleSubscriptionNotFoundException(SubscriptionNotFoundException ex) {
         log.error("Subscription not found: {}", ex.getMessage());
         return buildErrorResponse(ex.getMessage(), HttpStatus.NOT_FOUND);
     }
 
+    /**
+     * Handles SubscriptionAccessDeniedException.
+     * @param ex the exception to handle
+     * @return error response with FORBIDDEN status
+     */
     @ExceptionHandler(SubscriptionAccessDeniedException.class)
     public ResponseEntity<ErrorResponse> handleSubscriptionAccessDeniedException(SubscriptionAccessDeniedException ex) {
         log.error("Access denied: {}", ex.getMessage());
         return buildErrorResponse(ex.getMessage(), HttpStatus.FORBIDDEN);
     }
 
+    /**
+     * Handles SubscriptionAlreadyCancelledException.
+     * @param ex the exception to handle
+     * @return error response with CONFLICT status
+     */
     @ExceptionHandler(SubscriptionAlreadyCancelledException.class)
     public ResponseEntity<ErrorResponse> handleSubscriptionAlreadyCancelledException(SubscriptionAlreadyCancelledException ex) {
         log.error("Subscription already cancelled: {}", ex.getMessage());
         return buildErrorResponse(ex.getMessage(), HttpStatus.CONFLICT);
     }
 
+    /**
+     * Handles InvalidSubscriptionStatusException.
+     * @param ex the exception to handle
+     * @return error response with BAD_REQUEST status
+     */
     @ExceptionHandler(InvalidSubscriptionStatusException.class)
     public ResponseEntity<ErrorResponse> handleInvalidSubscriptionStatusException(InvalidSubscriptionStatusException ex) {
         log.error("Invalid subscription status: {}", ex.getMessage());
         return buildErrorResponse(ex.getMessage(), HttpStatus.BAD_REQUEST);
     }
 
+    /**
+     * Handles MethodArgumentNotValidException for validation errors.
+     * @param ex the exception to handle
+     * @return validation error response with field-level errors
+     */
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<ValidationErrorResponse> handleValidationExceptions(MethodArgumentNotValidException ex) {
         log.error("Validation error: {}", ex.getMessage());
@@ -69,6 +97,11 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
     }
 
+    /**
+     * Handles MethodArgumentTypeMismatchException for type conversion errors.
+     * @param ex the exception to handle
+     * @return error response with BAD_REQUEST status
+     */
     @ExceptionHandler(MethodArgumentTypeMismatchException.class)
     public ResponseEntity<ErrorResponse> handleMethodArgumentTypeMismatchException(MethodArgumentTypeMismatchException ex) {
         log.error("Type mismatch: {}", ex.getMessage());
@@ -77,12 +110,23 @@ public class GlobalExceptionHandler {
         return buildErrorResponse(message, HttpStatus.BAD_REQUEST);
     }
 
+    /**
+     * Handles generic exceptions.
+     * @param ex the exception to handle
+     * @return error response with INTERNAL_SERVER_ERROR status
+     */
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ErrorResponse> handleGenericException(Exception ex) {
         log.error("Unexpected error occurred: {}", ex.getMessage(), ex);
         return buildErrorResponse("An unexpected error occurred", HttpStatus.INTERNAL_SERVER_ERROR);
     }
 
+    /**
+     * Builds a standardized error response.
+     * @param message the error message
+     * @param status the HTTP status
+     * @return error response entity
+     */
     private ResponseEntity<ErrorResponse> buildErrorResponse(String message, HttpStatus status) {
         ErrorResponse response = ErrorResponse.builder()
                 .timestamp(LocalDateTime.now())

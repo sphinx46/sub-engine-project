@@ -20,6 +20,9 @@ import org.springframework.security.oauth2.server.resource.authentication.JwtGra
 import org.springframework.security.web.SecurityFilterChain;
 import java.time.Duration;
 
+/**
+ * Security configuration for OAuth2 JWT authentication and authorization.
+ */
 @Slf4j
 @Configuration
 @EnableWebSecurity
@@ -31,6 +34,12 @@ public class SecurityConfig {
     @Value("${spring.security.oauth2.resourceserver.jwt.jwk-set-uri}")
     private String jwkSetUri;
 
+    /**
+     * Configures the security filter chain for HTTP requests.
+     * @param http the HttpSecurity to configure
+     * @return the configured SecurityFilterChain
+     * @throws Exception if configuration fails
+     */
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
@@ -57,6 +66,10 @@ public class SecurityConfig {
         return http.build();
     }
 
+    /**
+     * Creates and configures a JWT decoder with validation.
+     * @return the configured JwtDecoder
+     */
     @Bean
     public JwtDecoder jwtDecoder() {
         NimbusJwtDecoder jwtDecoder = NimbusJwtDecoder.withJwkSetUri(jwkSetUri).build();
@@ -70,6 +83,10 @@ public class SecurityConfig {
         return jwtDecoder;
     }
 
+    /**
+     * Creates a JWT authentication converter for extracting authorities.
+     * @return the configured JwtAuthenticationConverter
+     */
     @Bean
     public JwtAuthenticationConverter jwtAuthenticationConverter() {
         JwtGrantedAuthoritiesConverter grantedAuthoritiesConverter = new JwtGrantedAuthoritiesConverter();

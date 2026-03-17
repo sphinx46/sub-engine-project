@@ -10,8 +10,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 /**
- * Компонент для преобразования сущностей в DTO и обратно.
- * Обеспечивает маппинг объектов между различными слоями приложения.
+ * Component for mapping entities to DTOs and vice versa using ModelMapper.
  */
 @Slf4j
 @Component
@@ -19,14 +18,14 @@ import java.util.stream.Collectors;
 public class EntityMapper {
     private final ModelMapper modelMapper;
 
+
     /**
-     * Преобразует объект одного типа в объект другого типа.
-     *
-     * @param source исходный объект
-     * @param targetClass класс целевого объекта
-     * @param <S> тип исходного объекта
-     * @param <T> тип целевого объекта
-     * @return преобразованный объект или null, если source равен null
+     * Maps an object of one type to another type using ModelMapper.
+     * @param source the source object to map
+     * @param targetClass the target class type
+     * @param <S> the source type
+     * @param <T> the target type
+     * @return the mapped object or null if source is null
      */
     public <S, T> T map(final S source, final Class<T> targetClass) {
         if (source == null) {
@@ -39,14 +38,14 @@ public class EntityMapper {
         return modelMapper.map(source, targetClass);
     }
 
+
     /**
-     * Преобразует список объектов одного типа в список объектов другого типа.
-     *
-     * @param source исходный список
-     * @param targetClass класс целевых объектов
-     * @param <S> тип исходных объектов
-     * @param <T> тип целевых объектов
-     * @return преобразованный список или пустой список, если source равен null или пуст
+     * Maps a list of objects of one type to a list of objects of another type.
+     * @param source the source list to map
+     * @param targetClass the target class type for list elements
+     * @param <S> the source type
+     * @param <T> the target type
+     * @return the mapped list or empty list if source is null or empty
      */
     public <S, T> List<T> mapList(final List<S> source, final Class<T> targetClass) {
         if (source == null || source.isEmpty()) {

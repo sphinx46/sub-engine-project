@@ -17,6 +17,9 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 
+/**
+ * Client for communicating with the billing service through the API gateway.
+ */
 @Slf4j
 @Component
 @RequiredArgsConstructor
@@ -27,6 +30,13 @@ public class BillingServiceClient {
     @Value("${services.gateway.url:http://api-gateway:8084}")
     private String gatewayUrl;
 
+    /**
+     * Creates a payment for the specified subscription through the billing service.
+     * @param subscriptionId the subscription ID
+     * @param userId the user ID
+     * @return the confirmation URL for payment
+     * @throws RuntimeException if payment creation fails
+     */
     public String createPayment(UUID subscriptionId, UUID userId) {
         log.info("Calling billing service through gateway to create payment for subscription: {}, user: {}", subscriptionId, userId);
 
@@ -98,6 +108,10 @@ public class BillingServiceClient {
         }
     }
 
+    /**
+     * Extracts JWT token from the security context.
+     * @return the JWT token or null if not found
+     */
     private String extractJwtToken() {
         try {
             var authentication = SecurityContextHolder.getContext().getAuthentication();
@@ -111,6 +125,10 @@ public class BillingServiceClient {
         return null;
     }
 
+    /**
+     * Extracts user email from JWT token in the security context.
+     * @return the user email or null if not found
+     */
     private String extractUserEmail() {
         try {
             var authentication = SecurityContextHolder.getContext().getAuthentication();

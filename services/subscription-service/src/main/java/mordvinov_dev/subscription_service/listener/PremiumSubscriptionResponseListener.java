@@ -9,6 +9,9 @@ import org.springframework.messaging.handler.annotation.Payload;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
+/**
+ * Kafka listener for processing premium subscription response events.
+ */
 @Slf4j
 @Component
 @RequiredArgsConstructor
@@ -16,6 +19,10 @@ public class PremiumSubscriptionResponseListener {
 
     private final SubscriptionServiceImpl subscriptionService;
 
+    /**
+     * Processes premium subscription response events from Kafka.
+     * @param event the premium subscription response event
+     */
     @KafkaListener(
             topics = "${kafka.topics.premium-subscription-response:premium-subscription-response}",
             groupId = "${spring.kafka.consumer.group-id:subscription-service-group}",

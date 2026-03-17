@@ -10,20 +10,15 @@ import org.springframework.context.annotation.Configuration;
 
 
 /**
- * Конфигурационный класс для настройки ModelMapper.
- * Определяет правила маппинга между сущностями, DTO и событиями.
- * Обеспечивает корректное преобразование данных между слоями приложения.
- *
+ * Configuration class for ModelMapper setup and custom mappings.
  */
 @Slf4j
 @Configuration
 public class ModelMapperConfig {
 
     /**
-     * Создает и настраивает ModelMapper для преобразования сущностей в DTO и события.
-     * Включает сопоставление полей, пропуск null значений и доступ к приватным полям.
-     *
-     * @return настроенный экземпляр ModelMapper с определенными правилами маппинга
+     * Creates and configures a ModelMapper bean with custom mappings.
+     * @return configured ModelMapper instance
      */
     @Bean
     public ModelMapper modelMapper() {
@@ -44,11 +39,10 @@ public class ModelMapperConfig {
         return modelMapper;
     }
 
+
     /**
-     * Настраивает маппинг между сущностью Message и MessageResponse.
-     * Определяет правила преобразования полей сообщения в DTO ответа.
-     *
-     * @param modelMapper экземпляр ModelMapper для настройки
+     * Configures custom mappings for Subscription entity to SubscriptionResponse DTO.
+     * @param modelMapper the ModelMapper instance to configure
      */
     private void configureSubscriptionMappings(final ModelMapper modelMapper) {
         modelMapper.addMappings(new PropertyMap<Subscription, SubscriptionResponse>() {

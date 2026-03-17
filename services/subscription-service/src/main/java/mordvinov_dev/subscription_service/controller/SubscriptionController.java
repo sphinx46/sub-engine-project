@@ -16,6 +16,9 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.UUID;
 
+/**
+ * REST controller for managing subscription operations.
+ */
 @Slf4j
 @RestController
 @RequestMapping("/api/subscriptions")
@@ -23,6 +26,13 @@ import java.util.UUID;
 public class SubscriptionController {
     private final SubscriptionService subscriptionService;
 
+    /**
+     * Creates a new subscription.
+     * @param request the subscription creation request
+     * @param userId the user ID from request header
+     * @param userEmail the user email from request header
+     * @return the created subscription response
+     */
     @PostMapping
     public ResponseEntity<SubscriptionResponse> createSubscription(
             @RequestBody CreateSubscriptionRequest request,
@@ -36,6 +46,15 @@ public class SubscriptionController {
         return ResponseEntity.ok(response);
     }
 
+    /**
+     * Retrieves subscriptions for a specific user with pagination.
+     * @param userId the user ID
+     * @param size the page size
+     * @param pageNumber the page number
+     * @param sortedBy the field to sort by
+     * @param direction the sort direction
+     * @return paginated list of user subscriptions
+     */
     @GetMapping("/{userId}")
     public ResponseEntity<PageResponse<SubscriptionResponse>> getUserSubscriptions(@PathVariable UUID userId,
                                                                                    @RequestParam(defaultValue = "20", required = false) @Min(1) final Integer size,
@@ -56,6 +75,16 @@ public class SubscriptionController {
         return ResponseEntity.ok(response);
     }
 
+    /**
+     * Retrieves subscriptions for a user filtered by status with pagination.
+     * @param userId the user ID
+     * @param status the subscription status to filter by
+     * @param size the page size
+     * @param pageNumber the page number
+     * @param sortedBy the field to sort by
+     * @param direction the sort direction
+     * @return paginated list of user subscriptions with specified status
+     */
     @GetMapping("/{userId}/status/{status}")
     public ResponseEntity<PageResponse<SubscriptionResponse>> getUserSubscriptionsByStatus(
             @PathVariable UUID userId,
@@ -78,6 +107,12 @@ public class SubscriptionController {
         return ResponseEntity.ok(response);
     }
 
+    /**
+     * Cancels a subscription.
+     * @param subscriptionId the subscription ID
+     * @param userId the user ID from request header
+     * @return the cancelled subscription response
+     */
     @PatchMapping("/{subscriptionId}/cancel")
     public ResponseEntity<SubscriptionResponse> cancelSubscription(@PathVariable UUID subscriptionId,
                                                                    @RequestHeader("X-User-Id") UUID userId) {
@@ -87,6 +122,11 @@ public class SubscriptionController {
         return ResponseEntity.ok(response);
     }
 
+    /**
+     * Counts active subscriptions for a user.
+     * @param userId the user ID
+     * @return the count of active subscriptions
+     */
     @GetMapping("/{userId}/active/count")
     public ResponseEntity<Long> getUserActiveSubscriptionsCount(@PathVariable UUID userId) {
         log.debug("Counting active subscriptions for user: {}", userId);
@@ -95,6 +135,14 @@ public class SubscriptionController {
         return ResponseEntity.ok(count);
     }
 
+    /**
+     * Updates the subscription plan.
+     * @param subscriptionId the subscription ID
+     * @param userId the user ID from request header
+     * @param userEmail the user email from request header
+     * @param newPlan the new plan type
+     * @return the updated subscription response
+     */
     @PatchMapping("/{subscriptionId}/plan")
     public ResponseEntity<SubscriptionResponse> updateSubscriptionPlan(
             @PathVariable UUID subscriptionId,
