@@ -12,6 +12,10 @@ import org.springframework.stereotype.Component;
 
 import java.util.HashMap;
 
+/**
+ * Kafka listener for premium subscription request events.
+ * Processes incoming subscription requests and creates corresponding payments.
+ */
 @Slf4j
 @Component
 @RequiredArgsConstructor
@@ -19,6 +23,10 @@ public class PremiumSubscriptionRequestListener {
 
     private final PaymentService paymentService;
 
+    /**
+     * Handles premium subscription request events from Kafka.
+     * @param event the premium subscription request event
+     */
     @KafkaListener(
             topics = "${kafka.topics.premium-subscription-request:premium-subscription-request}",
             groupId = "${spring.kafka.consumer.group-id:billing-service-group}",

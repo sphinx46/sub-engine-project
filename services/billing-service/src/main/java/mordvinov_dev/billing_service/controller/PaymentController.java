@@ -17,6 +17,10 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.UUID;
 
+/**
+ * REST controller for payment and refund operations.
+ * Provides endpoints for creating, managing, and retrieving payment information.
+ */
 @Slf4j
 @RestController
 @RequestMapping("/api/billing")
@@ -25,6 +29,12 @@ public class PaymentController {
 
     private final PaymentService paymentService;
 
+    /**
+     * Creates a new payment.
+     * @param request payment creation request
+     * @param userId user identifier from header
+     * @return created payment response
+     */
     @PostMapping("/payments")
     public ResponseEntity<PaymentResponse> createPayment(
             @Valid @RequestBody CreatePaymentRequest request,
@@ -35,6 +45,12 @@ public class PaymentController {
         return ResponseEntity.ok(response);
     }
 
+    /**
+     * Retrieves a payment by its identifier.
+     * @param paymentId payment identifier
+     * @param userId user identifier from header
+     * @return payment response
+     */
     @GetMapping("/payments/{paymentId}")
     public ResponseEntity<PaymentResponse> getPayment(
             @PathVariable String paymentId,
@@ -45,6 +61,15 @@ public class PaymentController {
         return ResponseEntity.ok(response);
     }
 
+    /**
+     * Retrieves a paginated list of user payments.
+     * @param userId user identifier from header
+     * @param size page size
+     * @param pageNumber page number
+     * @param sortBy sort field
+     * @param direction sort direction
+     * @return paginated payment list
+     */
     @GetMapping("/payments")
     public ResponseEntity<PageResponse<PaymentResponse>> getUserPayments(
             @RequestHeader("X-User-Id") UUID userId,
@@ -66,6 +91,12 @@ public class PaymentController {
         return ResponseEntity.ok(response);
     }
 
+    /**
+     * Captures (confirms) a payment.
+     * @param paymentId payment identifier
+     * @param userId user identifier from header
+     * @return updated payment response
+     */
     @PostMapping("/payments/{paymentId}/capture")
     public ResponseEntity<PaymentResponse> capturePayment(
             @PathVariable String paymentId,
@@ -76,6 +107,12 @@ public class PaymentController {
         return ResponseEntity.ok(response);
     }
 
+    /**
+     * Cancels a payment.
+     * @param paymentId payment identifier
+     * @param userId user identifier from header
+     * @return updated payment response
+     */
     @PostMapping("/payments/{paymentId}/cancel")
     public ResponseEntity<PaymentResponse> cancelPayment(
             @PathVariable String paymentId,
@@ -86,6 +123,12 @@ public class PaymentController {
         return ResponseEntity.ok(response);
     }
 
+    /**
+     * Retrieves a payment from YooKassa by its identifier.
+     * @param paymentId YooKassa payment identifier
+     * @param userId user identifier from header
+     * @return payment response
+     */
     @GetMapping("/payments/yookassa/{paymentId}")
     public ResponseEntity<PaymentResponse> getPaymentFromYooKassa(
             @PathVariable String paymentId,
@@ -96,6 +139,12 @@ public class PaymentController {
         return ResponseEntity.ok(response);
     }
 
+    /**
+     * Creates a new refund.
+     * @param request refund creation request
+     * @param userId user identifier from header
+     * @return created refund response
+     */
     @PostMapping("/refunds")
     public ResponseEntity<RefundResponse> createRefund(
             @Valid @RequestBody CreateRefundRequest request,
@@ -106,6 +155,12 @@ public class PaymentController {
         return ResponseEntity.ok(response);
     }
 
+    /**
+     * Retrieves a refund by its identifier.
+     * @param refundId refund identifier
+     * @param userId user identifier from header
+     * @return refund response
+     */
     @GetMapping("/refunds/{refundId}")
     public ResponseEntity<RefundResponse> getRefund(
             @PathVariable String refundId,
@@ -116,6 +171,16 @@ public class PaymentController {
         return ResponseEntity.ok(response);
     }
 
+    /**
+     * Retrieves a paginated list of refunds for a specific payment.
+     * @param paymentId payment identifier
+     * @param userId user identifier from header
+     * @param size page size
+     * @param pageNumber page number
+     * @param sortBy sort field
+     * @param direction sort direction
+     * @return paginated refund list
+     */
     @GetMapping("/payments/{paymentId}/refunds")
     public ResponseEntity<PageResponse<RefundResponse>> getRefundsByPayment(
             @PathVariable String paymentId,
@@ -138,6 +203,15 @@ public class PaymentController {
         return ResponseEntity.ok(response);
     }
 
+    /**
+     * Retrieves a paginated list of user refunds.
+     * @param userId user identifier from header
+     * @param size page size
+     * @param pageNumber page number
+     * @param sortBy sort field
+     * @param direction sort direction
+     * @return paginated refund list
+     */
     @GetMapping("/refunds")
     public ResponseEntity<PageResponse<RefundResponse>> getUserRefunds(
             @RequestHeader("X-User-Id") UUID userId,

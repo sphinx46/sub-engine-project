@@ -10,6 +10,10 @@ import org.springframework.stereotype.Component;
 
 import java.util.concurrent.CompletableFuture;
 
+/**
+ * Kafka producer for payment events.
+ * Publishes payment status changes and other payment-related events.
+ */
 @Slf4j
 @Component
 @RequiredArgsConstructor
@@ -20,6 +24,10 @@ public class PaymentEventProducer {
     @Value("${kafka.topics.payment-events:payment.events}")
     private String paymentEventsTopic;
 
+    /**
+     * Sends a payment event to Kafka.
+     * @param event the payment event to send
+     */
     public void sendPaymentEvent(PaymentEvent event) {
         log.info("Sending payment event: eventId={}, paymentId={}, status={}, userId={}",
                 event.getEventId(), event.getPaymentId(), event.getStatus(), event.getUserId());

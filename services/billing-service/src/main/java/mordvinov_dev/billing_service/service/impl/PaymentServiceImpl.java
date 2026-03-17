@@ -45,6 +45,7 @@ public class PaymentServiceImpl implements PaymentService {
     private final RefundRepository refundRepository;
     private final EntityMapper entityMapper;
 
+    /** {@inheritDoc} */
     @Override
     @Transactional
     public PaymentResponse createPayment(CreatePaymentRequest request, UUID userId) {
@@ -105,6 +106,7 @@ public class PaymentServiceImpl implements PaymentService {
         }
     }
 
+    /** {@inheritDoc} */
     @Override
     @Transactional(readOnly = true)
     public PaymentResponse getPayment(String paymentId, UUID userId) {
@@ -114,6 +116,7 @@ public class PaymentServiceImpl implements PaymentService {
         return entityMapper.map(paymentEntity, PaymentResponse.class);
     }
 
+    /** {@inheritDoc} */
     @Override
     @Transactional(readOnly = true)
     public PageResponse<PaymentResponse> getPaymentsByUser(UUID userId, PageRequest pageRequest) {
@@ -130,6 +133,7 @@ public class PaymentServiceImpl implements PaymentService {
                 .build();
     }
 
+    /** {@inheritDoc} */
     @Override
     @Transactional
     public PaymentResponse capturePayment(String paymentId, UUID userId) {
@@ -164,6 +168,7 @@ public class PaymentServiceImpl implements PaymentService {
         }
     }
 
+    /** {@inheritDoc} */
     @Override
     @Transactional
     public PaymentResponse cancelPayment(String paymentId, UUID userId) {
@@ -199,6 +204,7 @@ public class PaymentServiceImpl implements PaymentService {
         }
     }
 
+    /** {@inheritDoc} */
     @Override
     @Transactional
     public RefundResponse createRefund(CreateRefundRequest request, UUID userId) {
@@ -251,6 +257,7 @@ public class PaymentServiceImpl implements PaymentService {
         }
     }
 
+    /** {@inheritDoc} */
     @Override
     @Transactional(readOnly = true)
     public RefundResponse getRefund(String refundId, UUID userId) {
@@ -260,6 +267,7 @@ public class PaymentServiceImpl implements PaymentService {
         return entityMapper.map(refundEntity, RefundResponse.class);
     }
 
+    /** {@inheritDoc} */
     @Override
     @Transactional(readOnly = true)
     public PageResponse<RefundResponse> getRefundsByPayment(String paymentId, UUID userId, PageRequest pageRequest) {
@@ -280,6 +288,7 @@ public class PaymentServiceImpl implements PaymentService {
                 .build();
     }
 
+    /** {@inheritDoc} */
     @Override
     @Transactional(readOnly = true)
     public PageResponse<RefundResponse> getRefundsByUser(UUID userId, PageRequest pageRequest) {
@@ -296,6 +305,7 @@ public class PaymentServiceImpl implements PaymentService {
                 .build();
     }
 
+    /** {@inheritDoc} */
     @Override
     @Transactional(readOnly = true)
     public PaymentResponse getPaymentByYooKassaId(String paymentId, UUID userId) {

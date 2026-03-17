@@ -11,6 +11,10 @@ import java.time.LocalDateTime;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 
+/**
+ * Kafka producer for premium subscription response events.
+ * Sends payment success notifications to the premium subscription service.
+ */
 @Slf4j
 @Component
 @RequiredArgsConstructor
@@ -19,6 +23,12 @@ public class PremiumSubscriptionProducer {
     private final KafkaTemplate<String, PremiumSubscriptionResponseEvent> premiumSubscriptionResponseKafkaTemplate;
     private static final String RESPONSE_TOPIC = "premium-subscription-response";
 
+    /**
+     * Sends a payment success response event.
+     * @param subscriptionId subscription identifier
+     * @param userId user identifier
+     * @param paymentId payment identifier
+     */
     public void sendPaymentSuccessResponse(UUID subscriptionId, UUID userId, String paymentId) {
         log.info("Sending payment success response, subscriptionId={}, userId={}, paymentId={}",
                 subscriptionId, userId, paymentId);
@@ -37,6 +47,11 @@ public class PremiumSubscriptionProducer {
         sendResponse(event, userId.toString() + "_" + event.getEventId());
     }
 
+    /**
+     * Sends a response event to Kafka.
+     * @param event the response event to send
+     * @param key the Kafka message key
+     */
     private void sendResponse(PremiumSubscriptionResponseEvent event, String key) {
         try {
             CompletableFuture<SendResult<String, PremiumSubscriptionResponseEvent>> future =

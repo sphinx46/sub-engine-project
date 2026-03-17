@@ -20,40 +20,74 @@ import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.Map;
 
+/**
+ * Global exception handler for the billing service.
+ * Provides centralized exception handling and error response formatting.
+ */
 @Slf4j
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
+    /**
+     * Handles PaymentNotFoundException.
+     * @param ex the exception
+     * @return error response with NOT_FOUND status
+     */
     @ExceptionHandler(PaymentNotFoundException.class)
     public ResponseEntity<ErrorResponse> handlePaymentNotFoundException(PaymentNotFoundException ex) {
         log.error("Payment not found: {}", ex.getMessage());
         return buildErrorResponse(ex.getMessage(), HttpStatus.NOT_FOUND);
     }
 
+    /**
+     * Handles RefundNotFoundException.
+     * @param ex the exception
+     * @return error response with NOT_FOUND status
+     */
     @ExceptionHandler(RefundNotFoundException.class)
     public ResponseEntity<ErrorResponse> handleRefundNotFoundException(RefundNotFoundException ex) {
         log.error("Refund not found: {}", ex.getMessage());
         return buildErrorResponse(ex.getMessage(), HttpStatus.NOT_FOUND);
     }
 
+    /**
+     * Handles UnauthorizedPaymentAccessException.
+     * @param ex the exception
+     * @return error response with FORBIDDEN status
+     */
     @ExceptionHandler(UnauthorizedPaymentAccessException.class)
     public ResponseEntity<ErrorResponse> handleUnauthorizedPaymentAccessException(UnauthorizedPaymentAccessException ex) {
         log.error("Unauthorized access: {}", ex.getMessage());
         return buildErrorResponse(ex.getMessage(), HttpStatus.FORBIDDEN);
     }
 
+    /**
+     * Handles InvalidPaymentStatusException.
+     * @param ex the exception
+     * @return error response with BAD_REQUEST status
+     */
     @ExceptionHandler(InvalidPaymentStatusException.class)
     public ResponseEntity<ErrorResponse> handleInvalidPaymentStatusException(InvalidPaymentStatusException ex) {
         log.error("Invalid payment status: {}", ex.getMessage());
         return buildErrorResponse(ex.getMessage(), HttpStatus.BAD_REQUEST);
     }
 
+    /**
+     * Handles YooKassaException.
+     * @param ex the exception
+     * @return error response with BAD_GATEWAY status
+     */
     @ExceptionHandler(YooKassaException.class)
     public ResponseEntity<ErrorResponse> handleYooKassaException(YooKassaException ex) {
         log.error("YooKassa error: {}", ex.getMessage());
         return buildErrorResponse(ex.getMessage(), HttpStatus.BAD_GATEWAY);
     }
 
+    /**
+     * Handles MethodArgumentNotValidException for validation errors.
+     * @param ex the exception
+     * @return validation error response with field-level errors
+     */
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<ValidationErrorResponse> handleValidationExceptions(MethodArgumentNotValidException ex) {
         log.error("Validation error: {}", ex.getMessage());
@@ -76,6 +110,11 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
     }
 
+    /**
+     * Handles MethodArgumentTypeMismatchException for type conversion errors.
+     * @param ex the exception
+     * @return error response with BAD_REQUEST status
+     */
     @ExceptionHandler(MethodArgumentTypeMismatchException.class)
     public ResponseEntity<ErrorResponse> handleMethodArgumentTypeMismatchException(MethodArgumentTypeMismatchException ex) {
         log.error("Type mismatch: {}", ex.getMessage());
@@ -84,12 +123,23 @@ public class GlobalExceptionHandler {
         return buildErrorResponse(message, HttpStatus.BAD_REQUEST);
     }
 
+    /**
+     * Handles generic exceptions.
+     * @param ex the exception
+     * @return error response with INTERNAL_SERVER_ERROR status
+     */
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ErrorResponse> handleGenericException(Exception ex) {
         log.error("Unexpected error occurred: {}", ex.getMessage(), ex);
         return buildErrorResponse("An unexpected error occurred", HttpStatus.INTERNAL_SERVER_ERROR);
     }
 
+    /**
+     * Builds a standardized error response.
+     * @param message error message
+     * @param status HTTP status
+     * @return error response entity
+     */
     private ResponseEntity<ErrorResponse> buildErrorResponse(String message, HttpStatus status) {
         ErrorResponse response = ErrorResponse.builder()
                 .timestamp(LocalDateTime.now())

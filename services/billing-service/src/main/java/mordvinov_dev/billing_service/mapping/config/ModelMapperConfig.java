@@ -13,10 +13,18 @@ import org.springframework.context.annotation.Configuration;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 
+/**
+ * Configuration class for ModelMapper bean.
+ * Sets up custom mappings between entities and DTOs.
+ */
 @Slf4j
 @Configuration
 public class ModelMapperConfig {
 
+    /**
+     * Creates and configures a ModelMapper bean.
+     * @return configured ModelMapper instance
+     */
     @Bean
     public ModelMapper modelMapper() {
         log.info("MODEL_MAPPER_КОНФИГУРАЦИЯ_НАЧАЛО");
@@ -37,6 +45,10 @@ public class ModelMapperConfig {
         return modelMapper;
     }
 
+    /**
+     * Configures mappings for RefundEntity to RefundResponse.
+     * @param modelMapper the ModelMapper instance to configure
+     */
     private void configureRefundMappings(final ModelMapper modelMapper) {
         modelMapper.addMappings(new PropertyMap<RefundEntity, RefundResponse>() {
             @Override
@@ -63,6 +75,10 @@ public class ModelMapperConfig {
         });
     }
 
+    /**
+     * Configures mappings for PaymentEntity to PaymentResponse.
+     * @param modelMapper the ModelMapper instance to configure
+     */
     private void configurePaymentEntityMappings(final ModelMapper modelMapper) {
         modelMapper.addMappings(new PropertyMap<PaymentEntity, PaymentResponse>() {
             @Override

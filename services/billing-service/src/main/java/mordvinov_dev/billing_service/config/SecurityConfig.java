@@ -26,6 +26,10 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 import java.time.Duration;
 import java.util.List;
 
+/**
+ * Security configuration for the billing service.
+ * Configures OAuth2 JWT authentication, CORS, and endpoint security.
+ */
 @Slf4j
 @Configuration
 @EnableWebSecurity
@@ -38,6 +42,12 @@ public class SecurityConfig {
     @Value("${spring.security.oauth2.resourceserver.jwt.jwk-set-uri}")
     private String jwkSetUri;
 
+    /**
+     * Configures the security filter chain.
+     * @param http HttpSecurity configuration
+     * @return configured SecurityFilterChain
+     * @throws Exception if configuration fails
+     */
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
@@ -68,6 +78,10 @@ public class SecurityConfig {
         return http.build();
     }
 
+    /**
+     * Configures CORS settings.
+     * @return CORS configuration source
+     */
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
@@ -81,6 +95,10 @@ public class SecurityConfig {
         return source;
     }
 
+    /**
+     * Configures JWT decoder with validation.
+     * @return configured JwtDecoder
+     */
     @Bean
     public JwtDecoder jwtDecoder() {
         NimbusJwtDecoder jwtDecoder = NimbusJwtDecoder.withJwkSetUri(jwkSetUri).build();
@@ -94,6 +112,10 @@ public class SecurityConfig {
         return jwtDecoder;
     }
 
+    /**
+     * Configures JWT authentication converter.
+     * @return configured JwtAuthenticationConverter
+     */
     @Bean
     public JwtAuthenticationConverter jwtAuthenticationConverter() {
         JwtGrantedAuthoritiesConverter grantedAuthoritiesConverter = new JwtGrantedAuthoritiesConverter();

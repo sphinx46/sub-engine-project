@@ -8,6 +8,10 @@ import org.springframework.context.annotation.Configuration;
 import ru.loolzaaa.youkassa.client.ApiClient;
 import ru.loolzaaa.youkassa.client.ApiClientBuilder;
 
+/**
+ * Configuration class for YooKassa payment integration.
+ * Sets up API client and configuration properties for YooKassa service.
+ */
 @Getter
 @Setter
 @Configuration
@@ -19,6 +23,10 @@ public class YooKassaConfig {
     private String returnUrl;
     private String webhookUrl;
 
+    /**
+     * Creates and configures YooKassa API client.
+     * @return configured ApiClient instance
+     */
     @Bean
     public ApiClient yooKassaApiClient() {
         return ApiClientBuilder.newBuilder()

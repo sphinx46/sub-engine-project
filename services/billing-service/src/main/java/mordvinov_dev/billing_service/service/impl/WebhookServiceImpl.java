@@ -25,6 +25,7 @@ public class WebhookServiceImpl implements WebhookService {
     private final PaymentEventProducer paymentEventProducer;
     private final PremiumSubscriptionProducer premiumSubscriptionProducer;
 
+    /** {@inheritDoc} */
     @Override
     @Transactional
     public void processWebhook(JsonNode payload) {
@@ -81,6 +82,12 @@ public class WebhookServiceImpl implements WebhookService {
         paymentEventProducer.sendPaymentEvent(event);
     }
 
+    /**
+     * Extracts user email from payment entity or webhook payload.
+     * @param payload webhook JSON payload
+     * @param payment payment entity
+     * @return user email if found, null otherwise
+     */
     private String extractUserEmail(JsonNode payload, PaymentEntity payment) {
         if (payment.getUserEmail() != null && !payment.getUserEmail().isEmpty()) {
             return payment.getUserEmail();
@@ -100,6 +107,11 @@ public class WebhookServiceImpl implements WebhookService {
         return null;
     }
 
+    /**
+     * Maps YooKassa event type to internal payment status.
+     * @param yooKassaEvent YooKassa event type
+     * @return internal payment status or null if not mapped
+     */
     private String mapYooKassaStatus(String yooKassaEvent) {
         return switch (yooKassaEvent) {
             case "payment.succeeded" -> "succeeded";
