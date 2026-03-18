@@ -110,7 +110,7 @@
 - **Security** - OAuth2/JWT authentication with Keycloak integration
 - **Observability** - Comprehensive monitoring with Prometheus, Grafana, Loki, and distributed tracing
 - **Event-Driven** - Kafka-based asynchronous communication between services
-- **Data Management** - PostgreSQL with Flyway migrations and Redis caching
+- **Data Management** - PostgreSQL with Flyway migrations and MongoDB, Redis
 - **Cloud-Native** - Docker containerization and Kubernetes deployment ready
 - **Testing** - Comprehensive test suite with Testcontainers integration
 
@@ -728,9 +728,8 @@ The project includes comprehensive Kubernetes configurations in `infra/k8s/` dir
 #### Prerequisites
 - **Kubernetes cluster** (v1.25+)
 - **kubectl** configured with cluster access
-- **Helm 3** (optional, for Helm charts)
-- **Ingress controller** (nginx or traefik)
-- **Cert-manager** (for SSL certificates)
+- **Docker** for building images
+- **Minikube** (for local development)
 
 #### Deployment Components
 
@@ -744,14 +743,15 @@ metadata:
 ```
 
 **2. Database Deployments:**
-- **PostgreSQL instances** for each service (billing, subscription, keycloak)
+- **PostgreSQL instances** for billing, subscription, and keycloak services
 - **MongoDB** for worker service
+- **Redis** for caching and sessions
 - **PersistentVolumeClaims** for data persistence
-- **ConfigMaps** for database configurations
+- **ConfigMaps** for Keycloak realm configuration
 
 **3. Application Services:**
 - **Eureka Server** - Service discovery
-- **API Gateway** - Ingress and routing
+- **API Gateway** - Request routing and authentication
 - **Billing Service** - Payment processing
 - **Subscription Service** - Subscription management
 - **Worker Service** - Background processing
@@ -759,43 +759,73 @@ metadata:
 **4. Infrastructure Services:**
 - **Keycloak** - Identity and access management
 - **Kafka Cluster** - Event streaming (KRaft mode)
-- **Redis** - Caching and sessions
-- **Monitoring Stack** - Prometheus, Grafana, Loki, Tempo
+- **MailDev** - Email testing service
 
 #### Deployment Steps
 
 **1. Prepare Environment:**
 ```bash
-# Create namespace
-kubectl create namespace sub-engine
+# Create namespace (if not already created by deployment.yaml)
+kubectl create namespace sub-engine --dry-run=client -o yaml | kubectl apply -f -
 
 # Apply secrets (create from .env.example)
 kubectl apply -f infra/k8s/external-secrets.yaml
 ```
 
-**2. Deploy Infrastructure:**
+**2. Deploy All Services:**
 ```bash
-# Deploy databases and messaging
-kubectl apply -f infra/k8s/deployment.yaml -l component=database
-kubectl apply -f infra/k8s/deployment.yaml -l component=messaging
+# Deploy all services at once
+cat infra/k8s/deployment.yaml | kubectl apply -f -
+
+# Or deploy specific components:
+# Deploy databases and infrastructure first
+kubectl apply -f infra/k8s/deployment.yaml | grep -E '(StatefulSet|Deployment|Service)' | kubectl apply -f -
 
 # Wait for databases to be ready
-kubectl wait --for=condition=ready pod -l component=database -n sub-engine --timeout=300s
+kubectl wait --for=condition=ready pod -l app=kafka -n sub-engine --timeout=300s
+kubectl wait --for=condition=ready pod -l app=redis -n sub-engine --timeout=300s
+kubectl wait --for=condition=ready pod -l app=mongodb -n sub-engine --timeout=300s
 ```
 
 **3. Deploy Applications:**
 ```bash
-# Deploy microservices
-kubectl apply -f infra/k8s/deployment.yaml -l component=application
+# Deploy microservices (already included in step 2)
+# All services are deployed from the single deployment.yaml file
 
 # Wait for services to be ready
-kubectl wait --for=condition=ready pod -l component=application -n sub-engine --timeout=300s
+kubectl wait --for=condition=available deployment -n sub-engine --timeout=300s
+
+# Check pod status
+kubectl get pods -n sub-engine
 ```
 
-**4. Configure Ingress:**
+**Alternative: Build and Load Script**
 ```bash
-# Apply ingress configuration
-kubectl apply -f infra/k8s/ingress.yaml
+# For Minikube development - automated build and load
+./infra/scripts/build-and-load.sh
+```
+This script automates the complete build and deployment process for Minikube:
+- Checks and starts Minikube if needed
+- Builds all microservices (Maven/Gradle)
+- Creates Docker images for all services
+- Loads infrastructure images into Minikube
+- Verifies all images are loaded
+- Ready for deployment with kubectl apply commands
+
+**4. Access Services:**
+```bash
+# Get service URLs
+minikube service list -n sub-engine
+
+# Access specific services
+minikube service api-gateway -n sub-engine --url
+minikube service keycloak -n sub-engine --url
+```
+
+**Note:** Services are exposed as NodePort or ClusterIP. For external access, use `minikube service` or configure port forwarding.
+```bash
+# Port forwarding example
+kubectl port-forward svc/api-gateway 8084:8084 -n sub-engine
 ```
 
 #### External Secrets Management
@@ -847,11 +877,18 @@ spec:
 ```
 
 **Health Checks and Monitoring:**
-- **Liveness probes** for container health
+- **Liveness probes** configured for all services
 - **Readiness probes** for service availability
-- **Startup probes** for slow-starting services
-- **Prometheus metrics** scraping
-- **Grafana dashboards** for monitoring
+- **Health endpoints** at `/actuator/health` for all Spring Boot services
+- **Service discovery** through Eureka dashboard
+- **Manual monitoring** through kubectl and service logs
+```bash
+# Check service health
+kubectl get pods -n sub-engine
+kubectl logs -f deployment/billing-service -n sub-engine
+# Access Eureka dashboard
+minikube service eureka-server -n sub-engine --url
+```
 
 #### Backup and Recovery
 
