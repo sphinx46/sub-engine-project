@@ -45,6 +45,16 @@ jobs:
         ports:
           - 6379:6379
 
+      mongodb:
+        image: mongo:7-alpine
+        options: >-
+          --health-cmd "mongosh --eval 'db.runCommand({ping: 1})'"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 27017:27017
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -68,13 +78,14 @@ jobs:
           mvn -B clean verify -pl ${{ matrix.service }} -am -Djacoco.skip=false
         env:
           SPRING_PROFILES_ACTIVE: test
-          SPRING_DATASOURCE_URL: jdbc:h2:mem:testdb;DB_CLOSE_DELAY=-1;MODE=PostgreSQL;DATABASE_TO_UPPER=false
-          SPRING_DATASOURCE_DRIVER_CLASS_NAME: org.h2.Driver
-          SPRING_DATASOURCE_USERNAME: sa
-          SPRING_DATASOURCE_PASSWORD: password
-          SPRING_JPA_DATABASE_PLATFORM: org.hibernate.dialect.H2Dialect
+          SPRING_DATASOURCE_URL: ${{ matrix.service == 'services/billing-service' && 'jdbc:tc:postgresql:17-alpine:///billing_test' || 'jdbc:h2:mem:testdb;DB_CLOSE_DELAY=-1;MODE=PostgreSQL;DATABASE_TO_UPPER=false' }}
+          SPRING_DATASOURCE_DRIVER_CLASS_NAME: ${{ matrix.service == 'services/billing-service' && 'org.testcontainers.jdbc.ContainerDatabaseDriver' || 'org.h2.Driver' }}
+          SPRING_DATASOURCE_USERNAME: ${{ matrix.service == 'services/billing-service' && 'test_user' || 'sa' }}
+          SPRING_DATASOURCE_PASSWORD: ${{ matrix.service == 'services/billing-service' && 'test_password' || 'password' }}
+          SPRING_JPA_DATABASE_PLATFORM: ${{ matrix.service == 'services/billing-service' && 'org.hibernate.dialect.PostgreSQLDialect' || 'org.hibernate.dialect.H2Dialect' }}
           SPRING_REDIS_HOST: localhost
           SPRING_REDIS_PORT: 6379
+          MONGODB_TEST_URI: mongodb://localhost:27017/test
           KEYCLOAK_CLIENT_SECRET: ${{ secrets.KEYCLOAK_CLIENT_SECRET }}
           SIGNATURE_KEY_SECRET: ${{ secrets.SIGNATURE_KEY_SECRET }}
           YOOKASSA_SHOP_ID: ${{ secrets.YOOKASSA_SHOP_ID }}
@@ -279,6 +290,16 @@ jobs:
         ports:
           - 5432:5432
 
+      mongodb:
+        image: mongo:7-alpine
+        options: >-
+          --health-cmd "mongosh --eval 'db.runCommand({ping: 1})'"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 27017:27017
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -306,6 +327,7 @@ jobs:
           SPRING_DATASOURCE_USERNAME: sa
           SPRING_DATASOURCE_PASSWORD: password
           SPRING_JPA_DATABASE_PLATFORM: org.hibernate.dialect.H2Dialect
+          MONGODB_TEST_URI: mongodb://localhost:27017/test
           KEYCLOAK_CLIENT_SECRET: ${{ secrets.KEYCLOAK_CLIENT_SECRET }}
           SIGNATURE_KEY_SECRET: ${{ secrets.SIGNATURE_KEY_SECRET }}
           YOOKASSA_SHOP_ID: ${{ secrets.YOOKASSA_SHOP_ID }}
