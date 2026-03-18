@@ -345,12 +345,12 @@ The External Secrets Operator needs AWS credentials to authenticate with Secrets
 
 ```bash
 # Encode Access Key ID
-echo -n "AKIAIOSFODNN7EXAMPLE" | base64
-# Output: QUtJQUlPU0ZPRE5ON0VYQU1QTEU=
+echo -n "YOUR_AWS_ACCESS_KEY_ID" | base64
+# Output: YOUR_AWS_ACCESS_KEY_ID=
 
 # Encode Secret Access Key
-echo -n "wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY" | base64
-# Output: d0phbHJYVXRuRkVNSS9LN01ERU5HL2JQeFJmaUNZRVhBTVBMRUtFWQ==
+echo -n "YOUR_AWS_SECRET_ACCESS_KEY" | base64
+# Output: YOUR_AWS_SECRET_ACCESS_KEY=
 ```
 
 #### Create the Kubernetes secret using either method below:
@@ -376,8 +376,8 @@ metadata:
   namespace: sub-engine
 type: Opaque
 data:
-  access-key-id: QUtJQUlPU0ZPRE5ON0VYQU1QTEU=
-  secret-access-key: d0phbHJYVXRuRkVNSS9LN01ERU5HL2JQeFJmaUNZRVhBTVBMRUtFWQ==
+  access-key-id: YOUR_AWS_ACCESS_KEY_ID
+  secret-access-key: YOUR_AWS_SECRET_ACCESS_KEY
 ```
 
 Apply the secret:
