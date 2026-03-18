@@ -1,0 +1,147 @@
+spring:
+  datasource:
+    url: jdbc:postgresql://subscription-postgres:5432/${SUBSCRIPTION_DB_NAME}
+    username: ${SUBSCRIPTION_DB_USERNAME}
+    password: ${SUBSCRIPTION_DB_PASSWORD}
+    driver-class-name: org.postgresql.Driver
+    hikari:
+      maximum-pool-size: 10
+      minimum-idle: 5
+      connection-timeout: 30000
+      idle-timeout: 600000
+      max-lifetime: 1800000
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    show-sql: true
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+        format_sql: true
+        jdbc:
+          batch_size: 20
+        order_inserts: true
+        order_updates: true
+  flyway:
+    enabled: true
+    locations: classpath:db/migration
+    baseline-on-migrate: true
+    initialization-mode: always
+    baseline-version: 0
+    validate-on-migrate: false
+    clean-disabled: true
+  kafka:
+    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:kafka:9092}
+    producer:
+      properties:
+        spring.json.type.mapping: premiumSubscriptionRequest:mordvinov_dev.subscription_service.event.PremiumSubscriptionRequestEvent
+    consumer:
+      group-id: subscription-service-group
+      auto-offset-reset: earliest
+      properties:
+        spring.json.trusted.packages: "*"
+        spring.json.type.mapping: premiumSubscriptionResponse:mordvinov_dev.subscription_service.event.PremiumSubscriptionResponseEvent
+    admin:
+      properties:
+        bootstrap.servers: ${KAFKA_BOOTSTRAP_SERVERS:kafka:9092}
+  data:
+    redis:
+      host: ${REDIS_HOST:redis}
+      port: ${REDIS_PORT:6379}
+      password: ${REDIS_PASSWORD:}
+      timeout: ${REDIS_TIMEOUT:2000ms}
+      lettuce:
+        pool:
+          max-active: 8
+          max-idle: 8
+          min-idle: 0
+      repositories:
+        enabled: false
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: ${KEYCLOAK_ISSUER_URI:http://keycloak:8080/realms/sub-engine}
+          jwk-set-uri: ${KEYCLOAK_ISSUER_URI:http://keycloak:8080/realms/sub-engine}/protocol/openid-connect/certs
+
+eureka:
+  client:
+    service-url:
+      defaultZone: http://eureka-server:8761/eureka/
+    enabled: true
+    fetch-registry: true
+    register-with-eureka: true
+    registry-fetch-interval-seconds: 5
+    instance-info-replication-interval-seconds: 5
+    initial-instance-info-replication-interval-seconds: 5
+  instance:
+    hostname: subscription-service
+    prefer-ip-address: true
+    instance-id: ${spring.application.name}:${random.value}
+    lease-renewal-interval-in-seconds: 5
+    lease-expiration-duration-in-seconds: 15
+    status-page-url-path: /actuator/info
+    health-check-url-path: /actuator/health
+
+server:
+  port: ${SUBSCRIPTION_SERVICE_PORT:8081}
+  tomcat:
+    max-connections: 200
+    max-threads: 50
+    min-spare-threads: 10
+    connection-timeout: 5000
+  error:
+    include-message: always
+    include-binding-errors: always
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,prometheus
+  endpoint:
+    health:
+      show-details: always
+  metrics:
+    export:
+      prometheus:
+        enabled: true
+  tracing:
+    enabled: false
+    sampling:
+      probability: 1.0
+  zipkin:
+    tracing:
+      endpoint: http://tempo:9411/api/v2/spans
+
+logging:
+  level:
+    mordvinov_dev.subscripton_service: DEBUG
+    org.hibernate.SQL: INFO
+    org.flywaydb: DEBUG
+  pattern:
+    level: '%5p [${spring.application.name:},%X{traceId:-},%X{spanId:-}]'
+
+resilience4j:
+  circuitbreaker:
+    instances:
+      subscriptionService:
+        register-health-indicator: true
+        sliding-window-size: 10
+        minimum-number-of-calls: 5
+        permitted-number-of-calls-in-half-open-state: 3
+        automatic-transition-from-open-to-half-open-enabled: true
+        wait-duration-in-open-state: 5s
+        failure-rate-threshold: 50
+        event-consumer-buffer-size: 10
+  retry:
+    instances:
+      subscriptionService:
+        max-attempts: 3
+        wait-duration: 1s
+        retry-exceptions:
+          - org.springframework.dao.DataAccessException
+          - java.net.ConnectException
+services:
+  gateway:
+    url: ${GATEWAY_URL:http://api-gateway:8084}

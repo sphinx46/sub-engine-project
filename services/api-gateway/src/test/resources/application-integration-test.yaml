@@ -1,0 +1,55 @@
+spring:
+  application:
+    name: api-gateway-integration-test
+
+  cloud:
+    gateway:
+      enabled: true
+      discovery:
+        locator:
+          enabled: false
+      routes:
+        - id: test-route
+          uri: http://httpbin.org
+          predicates:
+            - Path=/api/test/**
+          filters:
+            - StripPrefix=2
+
+  main:
+    allow-bean-definition-overriding: true
+    web-application-type: reactive
+
+  autoconfigure:
+    exclude:
+      - org.springframework.boot.autoconfigure.security.oauth2.resource.servlet.OAuth2ResourceServerAutoConfiguration
+      - org.springframework.boot.autoconfigure.security.reactive.ReactiveSecurityAutoConfiguration
+      - org.springframework.boot.autoconfigure.security.reactive.ReactiveUserDetailsServiceAutoConfiguration
+      - org.springframework.boot.autoconfigure.security.servlet.SecurityAutoConfiguration
+      - org.springframework.boot.autoconfigure.security.servlet.UserDetailsServiceAutoConfiguration
+
+eureka:
+  client:
+    enabled: false
+    register-with-eureka: false
+    fetch-registry: false
+
+server:
+  port: 0
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,gateway
+  endpoint:
+    health:
+      show-details: always
+
+logging:
+  level:
+    mordvinov_dev.api_gateway: DEBUG
+    org.springframework.security: INFO
+    org.springframework.cloud.gateway: INFO
+    org.springframework.web: INFO
+    org.springframework.web.reactive: INFO

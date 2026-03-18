@@ -13,17 +13,24 @@ services:
       - EUREKA_CLIENT_SERVICE_URL_DEFAULT_ZONE=http://eureka-server:8761/eureka/
       - EUREKA_INSTANCE_HOSTNAME=eureka-server
       - EUREKA_SERVER_ENABLE_SELF_PRESERVATION=false
+      - EUREKA_SERVER_EVICTION_INTERVAL_TIMER_IN_MS=5000
     env_file:
       - ../../.env.dev
     networks:
       - sub-engine-network
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8761/actuator/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
 
   api-gateway:
     build:
       context: ../../services/api-gateway
     container_name: api-gateway
     ports:
-      - "${API_GATEWAY_PORT:-8080}:8080"
+      - "${API_GATEWAY_PORT:-8084}:8084"
     env_file:
       - ../../.env.dev
     environment:
@@ -33,19 +40,79 @@ services:
       - KEYCLOAK_CLIENT_SECRET=${KEYCLOAK_CLIENT_SECRET}
       - SIGNATURE_KEY_SECRET=${SIGNATURE_KEY_SECRET}
       - SPRING_PROFILES_ACTIVE=${SPRING_PROFILES_ACTIVE}
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - SERVER_PORT=8084
     depends_on:
       eureka-server:
-        condition: service_started
+        condition: service_healthy
       keycloak:
         condition: service_started
+      redis:
+        condition: service_healthy
     healthcheck:
-      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8080/actuator/health"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8084/actuator/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
       start_period: 40s
     networks:
       - sub-engine-network
+
+  subscription-service:
+    build:
+      context: ../../services/subscription-service
+    container_name: subscription-service
+    ports:
+      - "${SUBSCRIPTION_SERVICE_PORT:-8081}:8081"
+    env_file:
+      - ../../.env.dev
+    environment:
+      - SPRING_PROFILES_ACTIVE=${SPRING_PROFILES_ACTIVE}
+      - EUREKA_CLIENT_SERVICE_URL_DEFAULT_ZONE=http://eureka-server:8761/eureka/
+      - KEYCLOAK_ISSUER_URI=${KEYCLOAK_ISSUER_URI}
+      - SPRING_KAFKA_BOOTSTRAP_SERVERS=${KAFKA_BOOTSTRAP_SERVERS}
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://subscription-postgres:5432/${SUBSCRIPTION_DB_NAME}
+      - SPRING_DATASOURCE_USERNAME=${SUBSCRIPTION_DB_USERNAME}
+      - SPRING_DATASOURCE_PASSWORD=${SUBSCRIPTION_DB_PASSWORD}
+      - SIGNATURE_KEY_SECRET=${SIGNATURE_KEY_SECRET}
+      - EUREKA_INSTANCE_HOSTNAME=subscription-service
+      - SERVER_PORT=8081
+      - MANAGEMENT_TRACING_ENABLED=false
+    depends_on:
+      subscription-postgres:
+        condition: service_healthy
+      eureka-server:
+        condition: service_healthy
+      keycloak:
+        condition: service_started
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8081/actuator/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 40s
+    networks:
+      - sub-engine-network
+
+  tempo:
+    image: grafana/tempo:2.4.1
+    container_name: tempo
+    command: [ "-config.file=/etc/tempo/tempo.yaml" ]
+    volumes:
+      - ../tempo/tempo.yaml:/etc/tempo/tempo.yaml
+      - tempo_data:/tmp/tempo
+    ports:
+      - "3200:3200"
+      - "9411:9411"
+    networks:
+      - sub-engine-network
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://localhost:3200/ready"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
 
   loki:
     image: grafana/loki:2.9.2
@@ -78,7 +145,6 @@ services:
     command:
       - start-dev
       - --import-realm
-      - --health-enabled=true
     ports:
       - "8080:8080"
     env_file:
@@ -90,8 +156,6 @@ services:
       KC_DB_URL: jdbc:postgresql://keycloak-postgres:5432/${KEYCLOAK_DB_NAME}
       KC_DB_USERNAME: ${KEYCLOAK_DB_USERNAME}
       KC_DB_PASSWORD: ${KEYCLOAK_DB_PASSWORD}
-      KC_METRICS_ENABLED: "true"
-      KC_HEALTH_ENABLED: "true"
       KC_HOSTNAME: keycloak
       KC_HOSTNAME_STRICT: "false"
       KC_HTTP_ENABLED: "true"
@@ -100,15 +164,8 @@ services:
     depends_on:
       keycloak-postgres:
         condition: service_healthy
-    healthcheck:
-      test: [ "CMD-SHELL", "cat /proc/net/tcp 2>/dev/null | grep -q ':901F' || exit 1" ]
-      interval: 10s
-      timeout: 5s
-      retries: 30
-      start_period: 60s
     networks:
       - sub-engine-network
-
 
   alloy:
     image: grafana/alloy:latest
@@ -141,7 +198,6 @@ services:
     networks:
       - sub-engine-network
 
-
   keycloak-postgres:
     image: postgres:17-alpine
     container_name: keycloak-postgres
@@ -163,16 +219,19 @@ services:
     networks:
       - sub-engine-network
 
-  tempo:
-    image: grafana/tempo:2.4.1
-    container_name: tempo
-    command: [ "-config.file=/etc/tempo/tempo.yaml" ]
-    volumes:
-      - ../tempo/tempo.yaml:/etc/tempo/tempo.yaml
-      - tempo_data:/tmp/tempo
+  redis:
+    image: redis:7-alpine
+    container_name: redis
     ports:
-      - "3200:3200"
-      - "9411:9411"
+      - "${REDIS_PORT:-6379}:6379"
+    volumes:
+      - redis_data:/data
+    command: redis-server --appendonly yes
+    healthcheck:
+      test: [ "CMD", "redis-cli", "ping" ]
+      interval: 5s
+      timeout: 3s
+      retries: 5
     deploy:
       resources:
         limits:
@@ -181,48 +240,6 @@ services:
         reservations:
           memory: 128M
           cpus: '0.25'
-    healthcheck:
-      test: [ "CMD", "wget", "--spider", "-q", "http://localhost:3200/ready" ]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-    networks:
-      - sub-engine-network
-
-  subscription-service:
-    build:
-      context: ../../services/subscription-service
-    container_name: subscription-service
-    ports:
-      - "${SUBSCRIPTION_SERVICE_PORT}:8080"
-    env_file:
-      - ../../.env.dev
-    environment:
-      SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE}
-      JAVA_OPTS: ${JAVA_OPTS}
-      EUREKA_CLIENT_SERVICE_URL_DEFAULT_ZONE: http://eureka-server:8761/eureka/
-      KEYCLOAK_ISSUER_URI: ${KEYCLOAK_ISSUER_URI}
-      SPRING_KAFKA_BOOTSTRAP_SERVERS: ${KAFKA_BOOTSTRAP_SERVERS}
-      SPRING_DATASOURCE_URL: jdbc:postgresql://subscription-postgres:5432/${SUBSCRIPTION_DB_NAME}
-      SPRING_DATASOURCE_USERNAME: ${SUBSCRIPTION_DB_USERNAME}
-      SPRING_DATASOURCE_PASSWORD: ${SUBSCRIPTION_DB_PASSWORD}
-      SIGNATURE_KEY_SECRET: ${SIGNATURE_KEY_SECRET}
-      EUREKA_INSTANCE_HOSTNAME: subscription-service
-    depends_on:
-      subscription-postgres:
-        condition: service_healthy
-      eureka-server:
-        condition: service_started
-      keycloak:
-        condition: service_started
-      kafka:
-        condition: service_started
-    healthcheck:
-      test: [ "CMD", "curl", "-f", "http://localhost:8080/actuator/health" ]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-      start_period: 40s
     networks:
       - sub-engine-network
 
@@ -239,7 +256,7 @@ services:
       - "${SUBSCRIPTION_DB_PORT}:5432"
     volumes:
       - subscription_postgres_data:/var/lib/postgresql/data
-      - ./databases/subscription:/docker-entrypoint-initdb.d:ro
+      - ../../infra/databases/subscription:/docker-entrypoint-initdb.d:ro
     healthcheck:
       test: [ "CMD-SHELL", "pg_isready -U ${SUBSCRIPTION_DB_USERNAME} -d ${SUBSCRIPTION_DB_NAME}" ]
       interval: 10s
@@ -271,7 +288,7 @@ services:
       billing-postgres:
         condition: service_healthy
       eureka-server:
-        condition: service_started
+        condition: service_healthy
       keycloak:
         condition: service_started
       kafka:
@@ -298,7 +315,7 @@ services:
       - "${BILLING_DB_PORT}:5432"
     volumes:
       - billing_postgres_data:/var/lib/postgresql/data
-      - ./databases/billing:/docker-entrypoint-initdb.d:ro
+      - ../../infra/databases/billing:/docker-entrypoint-initdb.d:ro
     healthcheck:
       test: [ "CMD-SHELL", "pg_isready -U ${BILLING_DB_USERNAME} -d ${BILLING_DB_NAME}" ]
       interval: 10s
@@ -326,13 +343,15 @@ services:
       EUREKA_INSTANCE_HOSTNAME: worker-service
     depends_on:
       mongodb:
-        condition: service_started
+        condition: service_healthy
       eureka-server:
-        condition: service_started
+        condition: service_healthy
       keycloak:
         condition: service_started
       kafka:
         condition: service_started
+      maildev:
+        condition: service_healthy
     healthcheck:
       test: [ "CMD", "curl", "-f", "http://localhost:8080/actuator/health" ]
       interval: 30s
@@ -442,6 +461,25 @@ services:
     networks:
       - sub-engine-network
 
+  maildev:
+    image: maildev/maildev:latest
+    container_name: maildev
+    ports:
+      - "1080:1080"
+      - "1025:1025"
+    environment:
+      - MAILDEV_SMTP_PORT=1025
+      - MAILDEV_WEB_PORT=1080
+      - MAILDEV_INCOMING_USER=
+      - MAILDEV_INCOMING_PASS=
+    healthcheck:
+      test: [ "CMD", "wget", "--spider", "-q", "http://localhost:1080/" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - sub-engine-network
+
   billing-postgres-exporter:
     image: prometheuscommunity/postgres-exporter:latest
     container_name: billing-postgres-exporter
@@ -463,6 +501,7 @@ volumes:
   billing_postgres_data:
   mongo_data:
   tempo_data:
+  redis_data:
   kafka_data:
   loki_data:
   prometheus_data:

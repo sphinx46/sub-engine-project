@@ -1,0 +1,76 @@
+spring:
+  datasource:
+    url: jdbc:postgresql://billing-postgres:5432/${BILLING_DB_NAME}
+    username: ${BILLING_DB_USERNAME}
+    password: ${BILLING_DB_PASSWORD}
+    driver-class-name: org.postgresql.Driver
+    hikari:
+      maximum-pool-size: 10
+      minimum-idle: 5
+      connection-timeout: 30000
+      idle-timeout: 600000
+      max-lifetime: 1800000
+
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    show-sql: true
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+        format_sql: true
+        jdbc:
+          batch_size: 20
+        order_inserts: true
+        order_updates: true
+
+  flyway:
+    enabled: true
+    locations: classpath:db/migration
+    baseline-on-migrate: true
+    baseline-version: 0
+    validate-on-migrate: false
+    clean-disabled: true
+
+  kafka:
+    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:kafka:9092}
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
+      properties:
+        spring.json.type.mapping: |
+          premiumSubscriptionResponse:mordvinov_dev.billing_service.event.PremiumSubscriptionResponseEvent,
+          paymentEvent:mordvinov_dev.billing_service.event.PaymentEvent
+        spring.json.add.type.headers: false
+    consumer:
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
+      group-id: billing-service-group
+      auto-offset-reset: earliest
+      enable-auto-commit: false
+      properties:
+        spring.json.trusted.packages: mordvinov_dev.billing_service.event
+        spring.json.value.default.type: mordvinov_dev.billing_service.event.PremiumSubscriptionRequestEvent
+        spring.json.use.type.headers: false
+    admin:
+      properties:
+        bootstrap.servers: ${KAFKA_BOOTSTRAP_SERVERS:kafka:9092}
+
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: ${KEYCLOAK_ISSUER_URI:http://keycloak:8080/realms/sub-engine}
+          jwk-set-uri: ${KEYCLOAK_ISSUER_URI:http://keycloak:8080/realms/sub-engine}/protocol/openid-connect/certs
+
+youkassa:
+  shop-id: ${YOOKASSA_SHOP_ID}
+  secret-key: ${YOOKASSA_SECRET_KEY}
+  return-url: ${YOOKASSA_RETURN_URL:https://example.com/payment/return}
+  webhook-url: ${YOOKASSA_WEBHOOK_URL:https://api-gateway:8084/api/billing/webhook}
+
+kafka:
+  topics:
+    payment-events: payment.events
+    premium-subscription-request: premium-subscription-request
+    premium-subscription-response: premium-subscription-response

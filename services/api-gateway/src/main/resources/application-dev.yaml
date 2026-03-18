@@ -1,0 +1,104 @@
+spring:
+  application:
+    name: api-gateway
+
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: http://keycloak:8080/realms/sub-engine
+
+  cloud:
+    gateway:
+      discovery:
+        locator:
+          enabled: true
+          lower-case-service-id: true
+      routes:
+        - id: subscription-service
+          uri: lb://subscription-service
+          predicates:
+            - Path=/api/subscriptions/**
+          filters:
+            - name: RequestRateLimiter
+              args:
+                key-resolver: "#{@userKeyResolver}"
+                redis-rate-limiter.replenishRate: 10
+                redis-rate-limiter.burstCapacity: 20
+        - id: billing-service
+          uri: lb://billing-service
+          predicates:
+            - Path=/api/billing/**
+          filters:
+            - name: RequestRateLimiter
+              args:
+                key-resolver: "#{@userKeyResolver}"
+                redis-rate-limiter.replenishRate: 10
+                redis-rate-limiter.burstCapacity: 20
+        - id: billing-webhook
+          uri: lb://billing-service
+          predicates:
+            - Path=/api/billing/webhook/**
+          filters:
+            - RemoveRequestHeader=Cookie
+            - RemoveRequestHeader=X-User-Id
+        - id: worker-service
+          uri: lb://worker-service
+          predicates:
+            - Path=/api/worker/**
+          filters:
+            - name: RequestRateLimiter
+              args:
+                key-resolver: "#{@userKeyResolver}"
+                redis-rate-limiter.replenishRate: 20
+                redis-rate-limiter.burstCapacity: 40
+
+  data:
+    redis:
+      host: ${REDIS_HOST:redis}
+      port: ${REDIS_PORT:6379}
+      timeout: 2000ms
+      lettuce:
+        pool:
+          max-active: 8
+          max-idle: 8
+          min-idle: 0
+
+eureka:
+  client:
+    service-url:
+      defaultZone: ${EUREKA_URI:http://eureka-server:8761/eureka/}
+    register-with-eureka: true
+    fetch-registry: true
+  instance:
+    hostname: ${HOSTNAME:api-gateway}
+    prefer-ip-address: false
+
+server:
+  port: 8084
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,prometheus
+  endpoint:
+    health:
+      show-details: always
+
+logging:
+  level:
+    mordvinov_dev.api_gateway: DEBUG
+    org.springframework.security: DEBUG
+    org.springframework.security.web.server: DEBUG
+    org.springframework.security.oauth2: DEBUG
+    org.springframework.security.oauth2.jwt: DEBUG
+    org.springframework.cloud.gateway: DEBUG
+    org.springframework.web.server: DEBUG
+    org.springframework.web.reactive: DEBUG
+    reactor.netty: DEBUG
+    io.netty: DEBUG
+    org.springframework.security.web.server.authentication: DEBUG
+    org.springframework.security.web.server.authorization: DEBUG
+    org.springframework.security.web.server.context: DEBUG
+    org.springframework.security.web.server.util.matcher: DEBUG

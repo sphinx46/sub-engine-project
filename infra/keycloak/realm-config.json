@@ -710,18 +710,18 @@
       "clientId": "api-gateway",
       "name": "API Gateway",
       "description": "Backend API Gateway",
-      "rootUrl": "http://localhost:8082",
-      "adminUrl": "http://localhost:8082",
-      "baseUrl": "http://localhost:8082",
+      "rootUrl": "http://localhost:8084",
+      "adminUrl": "http://localhost:8084",
+      "baseUrl": "http://localhost:8084",
       "surrogateAuthRequired": false,
       "enabled": true,
       "alwaysDisplayInConsole": false,
       "clientAuthenticatorType": "client-secret",
       "redirectUris": [
-        "http://localhost:8082/*"
+        "http://localhost:8084/*"
       ],
       "webOrigins": [
-        "http://localhost:8082"
+        "http://localhost:8084"
       ],
       "notBefore": 0,
       "bearerOnly": false,
@@ -739,7 +739,7 @@
         "backchannel.logout.session.required": "true",
         "standard.token.exchange.enabled": "false",
         "frontchannel.logout.session.required": "true",
-        "post.logout.redirect.uris": "http://localhost:8082",
+        "post.logout.redirect.uris": "http://localhost:8084",
         "display.on.consent.screen": "false",
         "oauth2.device.authorization.grant.enabled": "false",
         "backchannel.logout.revoke.offline.tokens": "false"
