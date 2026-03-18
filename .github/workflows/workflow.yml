@@ -46,7 +46,7 @@ jobs:
           - 6379:6379
 
       mongodb:
-        image: mongo:7.0-alpine
+        image: mongo:7.0
         options: >-
           --health-cmd "mongosh --eval 'db.runCommand({ping: 1})'"
           --health-interval 10s
@@ -291,7 +291,7 @@ jobs:
           - 5432:5432
 
       mongodb:
-        image: mongo:7.0-alpine
+        image: mongo:7.0
         options: >-
           --health-cmd "mongosh --eval 'db.runCommand({ping: 1})'"
           --health-interval 10s
