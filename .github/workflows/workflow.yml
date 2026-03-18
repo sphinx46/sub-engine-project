@@ -75,6 +75,12 @@ jobs:
           SPRING_JPA_DATABASE_PLATFORM: org.hibernate.dialect.H2Dialect
           SPRING_REDIS_HOST: localhost
           SPRING_REDIS_PORT: 6379
+          KEYCLOAK_CLIENT_SECRET: ${{ secrets.KEYCLOAK_CLIENT_SECRET }}
+          SIGNATURE_KEY_SECRET: ${{ secrets.SIGNATURE_KEY_SECRET }}
+          YOOKASSA_SHOP_ID: ${{ secrets.YOOKASSA_SHOP_ID }}
+          YOOKASSA_SECRET_KEY: ${{ secrets.YOOKASSA_SECRET_KEY }}
+          MAIL_HOST: ${{ secrets.MAIL_HOST }}
+          MAIL_PORT: ${{ secrets.MAIL_PORT }}
 
       - name: Set safe service name
         id: safe-name
@@ -300,3 +306,9 @@ jobs:
           SPRING_DATASOURCE_USERNAME: sa
           SPRING_DATASOURCE_PASSWORD: password
           SPRING_JPA_DATABASE_PLATFORM: org.hibernate.dialect.H2Dialect
+          KEYCLOAK_CLIENT_SECRET: ${{ secrets.KEYCLOAK_CLIENT_SECRET }}
+          SIGNATURE_KEY_SECRET: ${{ secrets.SIGNATURE_KEY_SECRET }}
+          YOOKASSA_SHOP_ID: ${{ secrets.YOOKASSA_SHOP_ID }}
+          YOOKASSA_SECRET_KEY: ${{ secrets.YOOKASSA_SECRET_KEY }}
+          MAIL_HOST: ${{ secrets.MAIL_HOST }}
+          MAIL_PORT: ${{ secrets.MAIL_PORT }}
