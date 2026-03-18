@@ -2814,9 +2814,15 @@ spec:
             - name: KEYCLOAK_CLIENT_ID
               value: "api-gateway"
             - name: KEYCLOAK_CLIENT_SECRET
-              value: "your-client-secret-here"
+              valueFrom:
+                secretKeyRef:
+                  name: keycloak-client-secret
+                  key: client-secret
             - name: SIGNATURE_KEY_SECRET
-              value: "your-256-bit-secret-key-for-jwt-signature"
+              valueFrom:
+                secretKeyRef:
+                  name: jwt-signature-secret
+                  key: signature-key
             - name: REDIS_HOST
               value: "redis"
             - name: REDIS_PORT
@@ -2870,7 +2876,10 @@ spec:
           image: postgres:17-alpine
           env:
             - name: PGPASSWORD
-              value: "subscription"
+              valueFrom:
+                secretKeyRef:
+                  name: subscription-db-secret
+                  key: password
           command:
             - /bin/sh
             - -c
@@ -2932,11 +2941,20 @@ spec:
             - name: SPRING_DATASOURCE_URL
               value: "jdbc:postgresql://subscription-postgres:5432/subscription"
             - name: SPRING_DATASOURCE_USERNAME
-              value: "subscription"
+              valueFrom:
+                secretKeyRef:
+                  name: subscription-db-secret
+                  key: username
             - name: SPRING_DATASOURCE_PASSWORD
-              value: "subscription"
+              valueFrom:
+                secretKeyRef:
+                  name: subscription-db-secret
+                  key: password
             - name: SIGNATURE_KEY_SECRET
-              value: "your-256-bit-secret-key-for-jwt-signature"
+              valueFrom:
+                secretKeyRef:
+                  name: jwt-signature-secret
+                  key: signature-key
             - name: MANAGEMENT_TRACING_ENABLED
               value: "false"
             - name: SPRING_REDIS_HOST
@@ -2992,7 +3010,10 @@ spec:
           image: postgres:17-alpine
           env:
             - name: PGPASSWORD
-              value: "billing"
+              valueFrom:
+                secretKeyRef:
+                  name: billing-db-secret
+                  key: password
           command:
             - /bin/sh
             - -c
@@ -3054,11 +3075,20 @@ spec:
             - name: SPRING_DATASOURCE_URL
               value: "jdbc:postgresql://billing-postgres:5432/billing"
             - name: SPRING_DATASOURCE_USERNAME
-              value: "billing"
+              valueFrom:
+                secretKeyRef:
+                  name: billing-db-secret
+                  key: username
             - name: SPRING_DATASOURCE_PASSWORD
-              value: "billing"
+              valueFrom:
+                secretKeyRef:
+                  name: billing-db-secret
+                  key: password
             - name: SIGNATURE_KEY_SECRET
-              value: "your-256-bit-secret-key-for-jwt-signature"
+              valueFrom:
+                secretKeyRef:
+                  name: jwt-signature-secret
+                  key: signature-key
             - name: MANAGEMENT_TRACING_ENABLED
               value: "false"
             - name: EUREKA_INSTANCE_LEASE_RENEWAL_INTERVAL_IN_SECONDS
@@ -3170,7 +3200,10 @@ spec:
             - name: SPRING_DATA_MONGODB_URI
               value: "mongodb://mongodb:27017/worker"
             - name: SIGNATURE_KEY_SECRET
-              value: "your-256-bit-secret-key-for-jwt-signature"
+              valueFrom:
+                secretKeyRef:
+                  name: jwt-signature-secret
+                  key: signature-key
             - name: MANAGEMENT_TRACING_ENABLED
               value: "false"
             - name: EUREKA_INSTANCE_LEASE_RENEWAL_INTERVAL_IN_SECONDS
