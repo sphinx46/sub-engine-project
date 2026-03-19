@@ -125,6 +125,7 @@
 - **Spring Kafka** - Event-driven communication
 - **Spring Cloud Gateway** - API gateway
 - **Spring Cloud Netflix Eureka** - Service discovery
+- **Flyway** - Database migrations and version control
 
 ### Infrastructure & Monitoring
 - **PostgreSQL 17** - Primary database
