@@ -35,3 +35,49 @@ build/
 .mvn
 /.env.prod
 /.env.dev
+/backend/.env.prod
+/backend/.env.dev
+/amplicode.xml
+
+### macOS ###
+.DS_Store
+**/.DS_Store
+.AppleDouble
+.LSOverride
+._*
+
+### Секреты и локальные окружения (шаблоны .env.example остаются в репозитории) ###
+.env
+.env.local
+.env.*.local
+**/.env.dev
+**/.env.prod
+**/.env.local
+
+### Логи, отчёты, временные файлы ###
+*.log
+logs/
+*.pid
+*.tmp
+*.swp
+*.orig
+*.rej
+coverage/
+**/jacoco.exec
+**/dependency-check-report.*
+**/test-results/
+**/playwright-report/
+
+### Frontend ###
+**/node_modules/
+**/e2e/screenshots/
+**/e2e/report/
+
+
+### Документация (не входит в репозиторий, кроме корневого README.md) ###
+docs/
+**/docs/
+documentation/
+**/documentation/
+*.md
+!/README.md
