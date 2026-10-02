@@ -74,6 +74,7 @@ jobs:
           restore-keys: ${{ runner.os }}-m2-
 
       - name: Run unit tests with coverage
+        working-directory: backend
         run: |
           mvn -B clean verify -pl ${{ matrix.service }} -am -Djacoco.skip=false
         env:
@@ -191,6 +192,7 @@ jobs:
         run: sudo chown -R $USER:$USER .
 
       - name: Run OWASP dependency check
+        working-directory: backend
         if: github.event_name == 'pull_request'
         run: |
           mvn -B clean compile org.owasp:dependency-check-maven:check -DskipTests 
@@ -250,6 +252,7 @@ jobs:
           cache: 'maven'
 
       - name: Build service artifact
+        working-directory: backend
         run: |
           mvn -B -pl ${{ matrix.service }} -am package -DskipTests -Djacoco.skip=true
 
@@ -262,7 +265,7 @@ jobs:
       - name: Build and push Docker image
         uses: docker/build-push-action@v5
         with:
-          context: ./${{ matrix.service }}
+          context: ./backend/${{ matrix.service }}
           push: ${{ github.event_name != 'pull_request' }}
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
@@ -318,6 +321,7 @@ jobs:
           restore-keys: ${{ runner.os }}-m2-
 
       - name: Run integration tests
+        working-directory: backend
         run: |
           mvn -B -pl services/api-gateway,services/eureka-server,services/subscription-service,services/worker-service,services/billing-service -am verify -DskipUnitTests=true -Djacoco.skip=true
         env:
